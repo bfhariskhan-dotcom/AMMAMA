@@ -1,0 +1,6 @@
+{
+  "name": "AMMAMA Foods (Pvt.) Ltd.",
+  "description": "Official corporate portal & natural wellness store for AMMAMA Foods Private Limited (SECP UCI 0303557). Pure organic foods, botanical wellness formulas, and sustainable health products.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

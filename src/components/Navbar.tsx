@@ -69,12 +69,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const tickerItems = [
-    'SECP REGISTERED (UCI: 0303557) · SECTION 16, COMPANIES ACT 2017',
-    'FLAGSHIP TERRA HERBS-8: 8 POTENT BOTANICALS + 5 ESSENTIAL MINERALS',
+    'AMMAMA WELLNESS SHELF · SHOP 16, ROHILA MARKET, PHASE III HAYATABAD PESHAWAR',
+    'TEL & WHATSAPP: 0314-8973162 · SECP REGISTERED (UCI: 0303557)',
+    'FLAGSHIP TERRA HERBS-8: 8 POTENT BOTANICALS + 5 ESSENTIAL MINERALS (200G)',
+    'PREMIUM OLIVE OILS: MUDANYA · MUNDIAL · POMACE (FREE NATIONWIDE DELIVERY)',
+    'PURE CHOLISTAN DESI GHEE & WILD KARAK BERRY NECTAR HONEY',
     'NATIONWIDE CASH ON DELIVERY (COD) ACROSS ALL MAJOR CITIES IN PAKISTAN',
-    'BATCH QA PASSED: ZERO CHEMICAL BINDERS · 100% TRACEABLE HERBS',
-    'FREE DELIVERY ON ORDERS EXCEEDING PKR 3,500',
-    'OFFICIAL WHATSAPP DISPATCH & HELPLINE ACTIVE',
   ];
 
   return (
@@ -95,11 +95,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-4">
-          {/* Brand Logo - Image only, NO side text per instructions */}
+          {/* Brand Logo - Official packaging emblem */}
           <button
             onClick={() => handleNavClick('home')}
             className="flex items-center focus:outline-none cursor-pointer py-1 shrink-0"
-            aria-label="Terra Herbs-8 Home"
+            aria-label="Ammama Wellness Shelf Home"
           >
             <AmmamaLogo size="md" />
           </button>
@@ -160,22 +160,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span className="text-[10px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded">200g</span>
                   </button>
                   <button
+                    onClick={() => handleCategoryClick('olive-oil')}
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between"
+                  >
+                    <span>Premium Olive Oils (5L)</span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Free Del.</span>
+                  </button>
+                  <button
                     onClick={() => handleCategoryClick('honey')}
                     className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
                   >
-                    Wild Potohar Sidr Honey
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('superfood')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Organic Moringa Leaf Powder
+                    Pure Berry Nectar Honey of Karak
                   </button>
                   <button
                     onClick={() => handleCategoryClick('ghee')}
                     className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
                   >
-                    A2 Vedic Bilona Desi Ghee
+                    Cholistan Pure Desi Ghee
                   </button>
                 </div>
               )}
@@ -283,36 +284,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               )}
             </div>
-
-            {/* Admin Portal Tab */}
-            <button
-              onClick={() => handleNavClick('admin')}
-              className={`py-2 px-3 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
-                activeTab === 'admin'
-                  ? 'bg-[#1C432E] text-white'
-                  : 'text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200'
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>Admin Portal</span>
-            </button>
           </nav>
 
-          {/* Action Zone: WhatsApp (NO number in button), Cart, Order CTA & Mobile Menu */}
+          {/* Action Zone: Cart, Order CTA & Mobile Menu */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            {/* Direct WhatsApp button - strictly NO phone number in button text */}
-            <a
-              href={`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(
-                'Assalam-o-Alaikum AMMAMA Foods! I would like to inquire about your products.'
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#25D366] hover:bg-[#20ba59] rounded-md transition-colors shadow-2xs"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>Chat on WhatsApp</span>
-            </a>
-
             {/* Shopping Cart Button */}
             <button
               onClick={openCart}
@@ -489,17 +464,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Admin Link */}
-          <button
-            onClick={() => handleNavClick('admin')}
-            className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold transition-colors flex items-center gap-2 ${
-              activeTab === 'admin' ? 'bg-[#1C432E] text-white' : 'text-stone-700 hover:bg-stone-100'
-            }`}
-          >
-            <Settings className="w-4 h-4 text-[#C28E3A]" />
-            <span>Store Admin Portal</span>
-          </button>
-
           {/* Mobile Action Buttons */}
           <div className="pt-3 border-t border-stone-200 space-y-2">
             <button
@@ -507,29 +471,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 openCart();
               }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-stone-100 text-stone-800 text-sm font-semibold rounded-md"
+              className="w-full flex items-center justify-between px-4 py-3 bg-[#1C432E] text-white text-sm font-semibold rounded-md shadow-xs cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-[#1C432E]" />
-                <span>Shopping Cart</span>
+                <ShoppingBag className="w-4 h-4 text-emerald-200" />
+                <span>View Shopping Cart</span>
               </div>
-              <span className="font-mono bg-[#1C432E] text-white px-2 py-0.5 rounded text-xs">
+              <span className="font-mono bg-white text-[#1C432E] px-2 py-0.5 rounded text-xs font-bold">
                 {cartCount} items
               </span>
             </button>
-
-            {/* Direct WhatsApp button - strictly NO phone number in button text */}
-            <a
-              href={`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(
-                'Assalam-o-Alaikum AMMAMA Foods! I want to order products.'
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white text-xs font-semibold rounded-md shadow-xs"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Direct WhatsApp Orders</span>
-            </a>
           </div>
         </div>
       )}

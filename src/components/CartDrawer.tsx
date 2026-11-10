@@ -43,11 +43,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       .map((item) => `• ${item.product.name} (Qty: ${item.quantity}) - PKR ${(item.product.price * item.quantity).toLocaleString()}`)
       .join('\n');
 
-    const message = `Assalam-o-Alaikum AMMAMA Foods (Pvt.) Ltd. (UCI: ${COMPANY_INFO.uci})\n\nI would like to place an order:\n${itemsSummary}\n\nSubtotal: PKR ${subtotal.toLocaleString()}\nDelivery: ${deliveryFee === 0 ? 'FREE' : `PKR ${deliveryFee}`}\nGrand Total: PKR ${grandTotal.toLocaleString()}\n\nMy details:\nName: ${customerName || '[Your Name]'}\nCity: ${customerCity}\nAddress: ${customerAddress || '[Delivery Address]'}\nPayment: Cash on Delivery (COD)`;
+    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (UCI: ${COMPANY_INFO.uci})\n\nI would like to place an order:\n${itemsSummary}\n\nSubtotal: PKR ${subtotal.toLocaleString()}\nDelivery: ${deliveryFee === 0 ? 'FREE' : `PKR ${deliveryFee}`}\nGrand Total: PKR ${grandTotal.toLocaleString()}\n\nMy details:\nName: ${customerName || '[Your Name]'}\nCity: ${customerCity}\nAddress: ${customerAddress || '[Delivery Address]'}\nPayment: Cash on Delivery (COD)`;
 
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encoded}`, '_blank');
-    onShowToast('Connecting you with AMMAMA Foods WhatsApp helpline...');
+    onShowToast('Connecting you with Ammama Wellness Shelf WhatsApp helpline...');
   };
 
   const handlePlaceOrder = (e: React.FormEvent) => {

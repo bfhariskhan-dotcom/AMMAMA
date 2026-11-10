@@ -46,20 +46,21 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [testimonialSlide, setTestimonialSlide] = useState(0);
 
   const terraHerbs = PRODUCTS.find((p) => p.id === 'terra-herbs-8') || PRODUCTS[0];
-  const sidrHoney = PRODUCTS.find((p) => p.id === 'organic-sidr-honey') || PRODUCTS[1];
+  const karakHoney = PRODUCTS.find((p) => p.id === 'pure-berry-nectar-karak') || PRODUCTS[1];
+  const mudanyaOil = PRODUCTS.find((p) => p.id === 'mudanya-olive-oil') || PRODUCTS[3];
 
   // Hero Banners Slider - STRICTLY NO PRICING in banners as requested
   const slides = [
     {
       id: 1,
       tag: 'Flagship Formulation · 200g Whole-Plant Jar',
-      title: 'Pure Botanical Synergy. Nature’s Ultimate Defense.',
+      title: 'Ammama Wellness Shelf: Nature’s Pure Synergy.',
       subtitle:
-        'Terra Herbs-8 is AMMAMA’s breakthrough compound, formulated with eight standardized therapeutic herbs and five essential bio-available minerals to support cellular balance and daily vitality.',
+        'Terra Herbs-8 is carefully crafted with 8 vital organic herbs and 5 essential minerals that promote overall health, vitality, and cellular longevity for all age groups with zero side effects.',
       image: BRAND_ASSETS.terraHerbsJar,
       ctaText: 'Explore Terra Herbs-8',
       ctaAction: () => onOpenSingleProduct(terraHerbs),
-      secondaryText: 'View All Formulations',
+      secondaryText: 'View All Products',
       secondaryAction: () => {
         setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -67,14 +68,14 @@ export const HomePage: React.FC<HomePageProps> = ({
     },
     {
       id: 2,
-      tag: 'Single-Origin Potohar Harvest · 100% Raw',
-      title: 'Unpasteurized Wild Berry Sidr Honey',
+      tag: 'Wild Karak Mountain Harvest · 100% Raw',
+      title: 'Pure Berry Nectar Honey of Karak',
       subtitle:
-        'Harvested by generational beekeepers across the ancient Potohar plateau. Cold-extracted to safeguard live botanical enzymes, bee pollen, and soothing antioxidants.',
-      image: BRAND_ASSETS.sidrHoney,
-      ctaText: 'Discover Raw Sidr Honey',
-      ctaAction: () => onOpenSingleProduct(sidrHoney),
-      secondaryText: 'Explore Organic Pantry',
+        'Raw, unheated, single-origin Sidr berry nectar collected from wild Beri blossom forests across Karak. Naturally rich in active bio-enzymes, antimicrobial pollen, and caramel notes.',
+      image: BRAND_ASSETS.karakHoney,
+      ctaText: 'Discover Karak Honey',
+      ctaAction: () => onOpenSingleProduct(karakHoney),
+      secondaryText: 'Explore Natural Pantry',
       secondaryAction: () => {
         setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -82,17 +83,17 @@ export const HomePage: React.FC<HomePageProps> = ({
     },
     {
       id: 3,
-      tag: 'Regenerative Agriculture · Certified Organic Terroir',
-      title: 'From Pakistani Soil to Sealed Glass Jars',
+      tag: 'Premium Mediterranean Harvest · Free Nationwide Delivery',
+      title: 'Mudanya & Mundial First Cold-Pressed Olive Oils (5L)',
       subtitle:
-        'Direct contract farming with smallholder growers across Chakwal and Punjab. 100% non-GMO, zero chemical pesticides, and strict laboratory testing for heavy metals.',
-      image: BRAND_ASSETS.farmHarvest,
-      ctaText: 'Read Botanical Research',
+        'Extra virgin and culinary olive oils preserved in 5 Liter UV-protected tin canisters. Low natural acidity, heart-healthy oleic fats, and complimentary doorstep delivery across Pakistan.',
+      image: BRAND_ASSETS.mudanyaOliveOil,
+      ctaText: 'Explore Olive Oils',
       ctaAction: () => {
-        setActiveTab('events');
+        setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
-      secondaryText: 'Our Quality Charter',
+      secondaryText: 'Visit Peshawar Store',
       secondaryAction: () => {
         setActiveTab('contact');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -117,14 +118,54 @@ export const HomePage: React.FC<HomePageProps> = ({
   }, []);
 
   const herbDetails = [
-    { name: 'Garlic', amount: '30 Grams', urdu: 'Lehsan', desc: 'Concentrated natural allicin that fortifies immune defense and cardiovascular tone.' },
-    { name: 'Ginger', amount: '25 Grams', urdu: 'Adrak', desc: 'Therapeutic gingerols that ease digestive discomfort and soothe systemic inflammation.' },
-    { name: 'Turmeric', amount: '10 Grams', urdu: 'Haldi', desc: 'Standardized natural curcumin for cellular antioxidant defense and joint vitality.' },
-    { name: 'Black Pepper', amount: '15 Grams', urdu: 'Kaali Mirch', desc: 'Piperine matrix that amplifies active curcumin bioavailability by up to 20-fold.' },
-    { name: 'Beet Root', amount: '20 Grams', urdu: 'Chukandar', desc: 'Natural organic nitrates supporting arterial dilation, endurance, and blood flow.' },
-    { name: 'Chia Seeds', amount: '30 Grams', urdu: 'Tukhm-e-Sharbati', desc: 'Dense Omega-3 ALA fatty acids and soothing soluble dietary fiber.' },
-    { name: 'Kalonji', amount: '35 Grams', urdu: 'Black Seed', desc: 'Thymoquinone-rich prophetic seed for metabolic balance and deep vitality.' },
-    { name: 'Methi Dana', amount: '35 Grams', urdu: 'Fenugreek', desc: 'Soluble galactomannans supporting balanced glucose metabolism and healthy lipid profiles.' },
+    {
+      name: 'Garlic',
+      amount: '30 Grams',
+      urdu: 'Lehsan',
+      desc: 'Natural antibacterial that fights infections and boosts immune system, helps in lowering bad cholesterol to support healthy function of heart, and supportive in weight loss.',
+    },
+    {
+      name: 'Ginger',
+      amount: '25 Grams',
+      urdu: 'Adrak',
+      desc: 'With natural ginseng properties, improves men sexual health by enhancing blood circulation, supportive in stomach guts, improves digestion, soothes nausea, and a powerful anti-inflammatory that reduces pain.',
+    },
+    {
+      name: 'Kalwanji',
+      amount: '35 Grams',
+      urdu: 'Black Seed',
+      desc: 'Traditionally known as black poison/cure for all diseases due to its immune boosting properties. Supportive in sustaining healthy blood sugar levels, and aids in respiratory health.',
+    },
+    {
+      name: 'Chia Seeds',
+      amount: '30 Grams',
+      urdu: 'Tukhm-e-Sharbati',
+      desc: 'Packed with omega-3 fatty acids, fiber, and protein. Helps regulate digestion, supports heart health, and provides a natural energy boost.',
+    },
+    {
+      name: 'Methi Dana',
+      amount: '35 Grams',
+      urdu: 'Fenugreek',
+      desc: 'A powerful herb to improve digestion, reduce cholesterol, and support hormonal balance; a great ally for overall wellness.',
+    },
+    {
+      name: 'Beetroot',
+      amount: '20 Grams',
+      urdu: 'Chukandar',
+      desc: 'Rich in nitrates and antioxidants; supports healthy blood flow, reduces blood pressure, and enhances sexual stamina and performance.',
+    },
+    {
+      name: 'Turmeric',
+      amount: '10 Grams',
+      urdu: 'Haldi',
+      desc: 'Known for its potent antioxidant properties; helps combat inflammation, supports joint health, and promotes radiant skin.',
+    },
+    {
+      name: 'Black Pepper',
+      amount: '15 Grams',
+      urdu: 'Kaali Mirch',
+      desc: 'Enhances the bioavailability of turmeric and other nutrients while supporting digestion, detoxification, calcium absorption, and respiratory health.',
+    },
   ];
 
   const minerals = ['Potassium', 'Magnesium', 'Manganese', 'Calcium', 'Iron'];
@@ -292,17 +333,39 @@ export const HomePage: React.FC<HomePageProps> = ({
             <p className="text-stone-500 italic text-sm">A Protective Natural Herbs Formula</p>
 
             <p className="text-stone-700 text-sm leading-relaxed">
-              Formulated to counter modern metabolic and oxidative stressors. A golden, coarse, aromatic herbal powder compounded from 8 whole botanical plants, enriched with five vital natural minerals.
+              AMMAMA Foods Private Ltd offers a unique blend of 8 vital organic herbs for comprehensive daily wellness. In use since ancient times with proven efficacy and scientific research revealing zero side effects. Safe for all age groups to maintain vital human organs including Heart, Lungs, Pancreas, Kidney, and Stomach.
             </p>
 
-            <div className="grid grid-cols-2 gap-3 pt-1 text-xs text-stone-700">
-              <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-                <strong className="block text-stone-900 font-serif">8 Active Herbs</strong>
-                <span className="text-[11px] text-stone-500">Garlic, Kalonji, Ginger, etc.</span>
-              </div>
-              <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-                <strong className="block text-stone-900 font-serif">5 Vital Minerals</strong>
-                <span className="text-[11px] text-stone-500">Potassium, Magnesium, Iron, etc.</span>
+            {/* 10 Key Health Indications */}
+            <div className="space-y-2 pt-1">
+              <span className="text-xs font-bold text-[#0D3818] uppercase tracking-wider block">
+                Regular Use Improves Health Conditions In:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-stone-700">
+                <div className="flex items-start gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200/80">
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>Regulate blood sugar &amp; kidney functions</span>
+                </div>
+                <div className="flex items-start gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200/80">
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>Circulation, burn bad cholesterol &amp; open veins</span>
+                </div>
+                <div className="flex items-start gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200/80">
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>Reduce stomach guts &amp; eliminate constipation</span>
+                </div>
+                <div className="flex items-start gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200/80">
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>Boost immunity against bacterial/viral infections</span>
+                </div>
+                <div className="flex items-start gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200/80">
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>Anti-aging, cellular repair &amp; energy booster</span>
+                </div>
+                <div className="flex items-start gap-2 bg-stone-50 p-2 rounded-lg border border-stone-200/80">
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>Enhance sexual vitality, stamina &amp; performance</span>
+                </div>
               </div>
             </div>
 

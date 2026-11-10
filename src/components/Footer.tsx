@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, MessageCircle, ArrowUpRight } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, MapPin, Phone, Mail } from 'lucide-react';
 import { PageTab } from '../types';
 import { COMPANY_INFO } from '../data/companyData';
 import { AmmamaLogo } from './AmmamaLogo';
@@ -18,26 +18,31 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
     <footer className="bg-[#122A1C] text-stone-300 pt-14 pb-10 border-t border-[#1C3B2A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Brand Logo - Image only, NO side text per instructions */}
+          {/* Brand Identity & SECP Compliance */}
           <div className="md:col-span-4 space-y-4">
             <button
               onClick={() => handleNav('home')}
-              className="focus:outline-none cursor-pointer"
+              className="focus:outline-none cursor-pointer text-left"
             >
-              <AmmamaLogo size="lg" />
+              <AmmamaLogo size="lg" inverted={true} />
             </button>
 
             <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
-              Pure organic foods & herbal formulas crafted with botanical integrity. Registered with SECP under Corporate Unique Identity No. <strong>0303557</strong>.
+              Pure organic foods &amp; herbal formulas crafted with authentic botanical integrity. Formulated to support vital organs, natural vitality, and cellular longevity.
             </p>
 
-            <div className="flex items-center gap-2 text-xs text-[#E6C687]">
-              <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>Section 16, Companies Act-2017</span>
+            <div className="space-y-1.5 text-xs text-[#E6C687]">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>SECP Corporate Identity: No. <strong>{COMPANY_INFO.uci}</strong></span>
+              </div>
+              <p className="text-[11px] text-stone-400 pl-6">
+                Section 16 of the Companies Act-2017
+              </p>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Catalog Links */}
           <div className="md:col-span-3 space-y-2.5">
             <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider">
               Explore Store
@@ -48,7 +53,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('products')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Terra Herbs-8 Formula
+                  Terra Herbs-8 (Flagship Formula)
                 </button>
               </li>
               <li>
@@ -56,7 +61,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('products')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Wild Potohar Sidr Honey
+                  Pure Berry Nectar Honey of Karak
                 </button>
               </li>
               <li>
@@ -64,7 +69,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('products')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Organic Moringa Powder
+                  Cholistan Pure Desi Ghee
                 </button>
               </li>
               <li>
@@ -72,16 +77,24 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('products')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  A2 Vedic Bilona Ghee
+                  Mudanya Extra Virgin Olive Oil (5L)
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('products')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Mundial &amp; Pomace Olive Oils
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Company & Support */}
-          <div className="md:col-span-3 space-y-2.5">
+          {/* Governance & Admin Portal Option */}
+          <div className="md:col-span-2 space-y-2.5">
             <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider">
-              Governance & Care
+              Governance &amp; Care
             </h4>
             <ul className="space-y-2 text-xs text-stone-400">
               <li>
@@ -89,7 +102,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('customer-hub')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Customer Reviews & Track Order
+                  Customer Reviews &amp; Tracking
                 </button>
               </li>
               <li>
@@ -97,7 +110,15 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('contact')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Contact & Leadership
+                  Peshawar Store &amp; Contact
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('events')}
+                  className="hover:text-white transition-colors cursor-pointer"
+                >
+                  Botanical Research &amp; Studies
                 </button>
               </li>
               <li>
@@ -105,46 +126,51 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
                   onClick={() => handleNav('governance')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  SECP Credentials & Policies
+                  SECP Credentials &amp; Policies
                 </button>
               </li>
-              <li>
+              <li className="pt-2">
                 <button
                   onClick={() => handleNav('admin')}
-                  className="hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#1F412D] hover:bg-[#28573D] text-[#E6C687] hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+                  title="Open Store Administration Dashboard"
                 >
-                  <span>Admin Management</span>
-                  <ArrowUpRight className="w-3 h-3 text-stone-500" />
+                  <span>Admin Portal</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Direct WhatsApp - strictly NO phone number in button text */}
-          <div className="md:col-span-2 space-y-3">
+          {/* Store Location & Direct Contact Info (NO excessive WhatsApp button) */}
+          <div className="md:col-span-3 space-y-3">
             <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider">
-              Direct Support
+              Ammama Wellness Shelf
             </h4>
-            <p className="text-[11px] text-stone-400">
-              Nationwide Cash on Delivery (COD) across Pakistan.
-            </p>
-            <a
-              href={`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(
-                'Assalam-o-Alaikum AMMAMA Foods! I have an order inquiry.'
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-md transition-colors shadow-xs"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Chat on WhatsApp</span>
-            </a>
+            <div className="space-y-2 text-xs text-stone-400">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-[#E6C687] shrink-0 mt-0.5" />
+                <span className="leading-snug">{COMPANY_INFO.address}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-[#E6C687] shrink-0" />
+                <span className="font-mono text-stone-200">{COMPANY_INFO.phone}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#E6C687] shrink-0" />
+                <span>{COMPANY_INFO.email}</span>
+              </div>
+            </div>
+            <div className="p-2.5 bg-[#183925] rounded-lg border border-[#214D32] text-[11px] text-stone-300">
+              <span className="text-[#E6C687] font-semibold block mb-0.5">Nationwide Service</span>
+              Cash on Delivery (COD) across Pakistan. Free delivery on orders over PKR 3,500 and all Olive Oil 5L packs.
+            </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-[#1F412D] flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-400 gap-3">
-          <p>© 2025–2026 AMMAMA FOODS (PVT.) LTD. All rights reserved.</p>
+          <p>© 2025–2026 {COMPANY_INFO.brandName} · AMMAMA FOODS (PVT.) LTD. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <button
               onClick={() => handleNav('governance')}

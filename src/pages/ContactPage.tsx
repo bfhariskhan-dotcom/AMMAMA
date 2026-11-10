@@ -234,7 +234,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onShowToast }) => {
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 text-[#1C432E] shrink-0 mt-0.5" />
               <div>
-                <strong className="block text-stone-900">Corporate Head Office:</strong>
+                <strong className="block text-stone-900">Ammama Wellness Shelf (Peshawar Store &amp; Office):</strong>
                 <p className="text-stone-600 mt-0.5">{COMPANY_INFO.headOffice}</p>
               </div>
             </div>
@@ -242,7 +242,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onShowToast }) => {
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 text-[#1C432E] shrink-0 mt-0.5" />
               <div>
-                <strong className="block text-stone-900">Lahore Regional Office:</strong>
+                <strong className="block text-stone-900">Islamabad Coordination Office:</strong>
                 <p className="text-stone-600 mt-0.5">{COMPANY_INFO.regionalOffice}</p>
               </div>
             </div>

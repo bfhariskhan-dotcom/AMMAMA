@@ -45,8 +45,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
   const categories = [
     { id: 'all', label: 'All Products' },
     { id: 'formula', label: 'Herbal Formulas' },
+    { id: 'olive-oil', label: 'Premium Olive Oils (5L)' },
     { id: 'honey', label: 'Raw Honey' },
-    { id: 'superfood', label: 'Superfoods' },
     { id: 'ghee', label: 'Pure Desi Ghee' },
   ];
 

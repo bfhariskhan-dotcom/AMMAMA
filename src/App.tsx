@@ -6,7 +6,6 @@ import { Footer } from './components/Footer';
 import { CustomCursor } from './components/CustomCursor';
 import { CartDrawer } from './components/CartDrawer';
 import { ProductDetailModal } from './components/ProductDetailModal';
-import { QuickWhatsAppButton } from './components/QuickWhatsAppButton';
 import { Toast } from './components/Toast';
 
 import { HomePage } from './pages/HomePage';
@@ -189,9 +188,6 @@ export default function App() {
         onAddToCart={handleAddToCart}
         onShowToast={setToastMessage}
       />
-
-      {/* Direct Floating WhatsApp Contact Button */}
-      <QuickWhatsAppButton />
 
       {/* Feedback Toast Notification */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />

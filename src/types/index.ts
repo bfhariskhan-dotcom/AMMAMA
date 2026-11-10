@@ -2,7 +2,7 @@ export interface Product {
   id: string;
   name: string;
   subtitle: string;
-  category: 'formula' | 'honey' | 'superfood' | 'ghee' | 'wellness';
+  category: 'formula' | 'honey' | 'superfood' | 'ghee' | 'wellness' | 'olive-oil';
   price: number; // in PKR
   weight: string;
   image: string;

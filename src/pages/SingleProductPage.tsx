@@ -49,7 +49,7 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
   const relatedProducts = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
 
   const handleWhatsAppOrder = () => {
-    const message = `Assalam-o-Alaikum AMMAMA Foods (SECP UCI: ${COMPANY_INFO.uci}),\nI would like to order:\n• Product: ${product.name} (${product.weight})\n• Quantity: ${quantity}\n• Total Amount: PKR ${(product.price * quantity).toLocaleString()}\n• Payment: Cash on Delivery (COD)\nPlease guide me on delivery.`;
+    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (SECP UCI: ${COMPANY_INFO.uci}),\nI would like to order:\n• Product: ${product.name} (${product.weight})\n• Quantity: ${quantity}\n• Total Amount: PKR ${(product.price * quantity).toLocaleString()}\n• Payment: Cash on Delivery (COD)\nPlease guide me on delivery to my address.`;
     window.open(`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
     onShowToast(`Opening WhatsApp order for ${product.name}...`);
   };
@@ -122,7 +122,7 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
         <div className="lg:col-span-6 space-y-6">
           <div className="space-y-2">
             <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
-              AMMAMA Foods (Pvt.) Ltd. · Registered
+              Ammama Wellness Shelf · AMMAMA Foods (Pvt.) Ltd. (UCI: 0303557)
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0D3818] tracking-tight">
               {product.name}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheck,
   Check,
@@ -17,6 +17,8 @@ import {
   ChevronRight,
   BookOpen,
   ArrowUpRight,
+  Truck,
+  Box,
 } from 'lucide-react';
 import { PageTab, Product, ReviewItem } from '../types';
 import {
@@ -45,18 +47,29 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [selectedHerb, setSelectedHerb] = useState<number>(0);
   const [testimonialSlide, setTestimonialSlide] = useState(0);
 
-  const terraHerbs = PRODUCTS.find((p) => p.id === 'terra-herbs-8') || PRODUCTS[0];
-  const karakHoney = PRODUCTS.find((p) => p.id === 'pure-berry-nectar-karak') || PRODUCTS[1];
-  const mudanyaOil = PRODUCTS.find((p) => p.id === 'mudanya-olive-oil') || PRODUCTS[3];
+  const featuredCarouselRef = useRef<HTMLDivElement>(null);
+  const powdersCarouselRef = useRef<HTMLDivElement>(null);
 
-  // Hero Banners Slider - STRICTLY NO PRICING in banners as requested
+  const scrollCarousel = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
+    if (ref.current) {
+      ref.current.scrollBy({
+        left: direction === 'left' ? -340 : 340,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const terraHerbs = PRODUCTS.find((p) => p.id === 'terra-herbs-8') || PRODUCTS[0];
+  const karakHoney = PRODUCTS.find((p) => p.id === 'pure-beiry-nectar-honey') || PRODUCTS[3];
+  const mudanyaOil = PRODUCTS.find((p) => p.id === 'mudanya-sizma-olive-oil') || PRODUCTS[5];
+
+  // Hero Banners Slider - Only real user products, strictly NO pricing, full height
   const slides = [
     {
       id: 1,
-      tag: 'Flagship Formulation · 200g Whole-Plant Jar',
-      title: 'Ammama Wellness Shelf: Nature’s Pure Synergy.',
+      title: 'Terra Herbs-8: Nature’s Protective Formula',
       subtitle:
-        'Terra Herbs-8 is carefully crafted with 8 vital organic herbs and 5 essential minerals that promote overall health, vitality, and cellular longevity for all age groups with zero side effects.',
+        'Crafted with 8 vital organic herbs and 5 essential minerals. In use since ancient times to protect vital organs, improve circulation, and sustain daily vitality with zero side effects.',
       image: BRAND_ASSETS.terraHerbsJar,
       ctaText: 'Explore Terra Herbs-8',
       ctaAction: () => onOpenSingleProduct(terraHerbs),
@@ -68,14 +81,13 @@ export const HomePage: React.FC<HomePageProps> = ({
     },
     {
       id: 2,
-      tag: 'Wild Karak Mountain Harvest · 100% Raw',
       title: 'Pure Berry Nectar Honey of Karak',
       subtitle:
-        'Raw, unheated, single-origin Sidr berry nectar collected from wild Beri blossom forests across Karak. Naturally rich in active bio-enzymes, antimicrobial pollen, and caramel notes.',
+        '100% raw, unheated single-origin Sidr berry nectar collected from wild mountain Beri forests across Karak. Naturally rich in active enzymes and soothing antioxidants.',
       image: BRAND_ASSETS.karakHoney,
       ctaText: 'Discover Karak Honey',
       ctaAction: () => onOpenSingleProduct(karakHoney),
-      secondaryText: 'Explore Natural Pantry',
+      secondaryText: 'Explore Store',
       secondaryAction: () => {
         setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -83,19 +95,35 @@ export const HomePage: React.FC<HomePageProps> = ({
     },
     {
       id: 3,
-      tag: 'Premium Mediterranean Harvest · Free Nationwide Delivery',
-      title: 'Mudanya & Mundial First Cold-Pressed Olive Oils (5L)',
+      title: 'Mudanya & Mundial Premium Olive Oils (5L)',
       subtitle:
-        'Extra virgin and culinary olive oils preserved in 5 Liter UV-protected tin canisters. Low natural acidity, heart-healthy oleic fats, and complimentary doorstep delivery across Pakistan.',
+        'First cold-pressed Extra Virgin and culinary olive oils preserved in 5 Liter UV-protected canisters. Low acidity, rich polyphenols, and complete Free Nationwide Delivery.',
       image: BRAND_ASSETS.mudanyaOliveOil,
       ctaText: 'Explore Olive Oils',
       ctaAction: () => {
         setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
-      secondaryText: 'Visit Peshawar Store',
+      secondaryText: 'View All Products',
       secondaryAction: () => {
-        setActiveTab('contact');
+        setActiveTab('products');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+    },
+    {
+      id: 4,
+      title: 'Cholistan Pure Desi Ghee',
+      subtitle:
+        'Aromatic traditional Desi Ghee slow-clarified from fresh cultured butter of free-grazing indigenous cows in Cholistan. Natural golden granules (daana) and authentic taste.',
+      image: BRAND_ASSETS.cholistanGhee,
+      ctaText: 'Discover Desi Ghee',
+      ctaAction: () => {
+        const ghee = PRODUCTS.find((p) => p.id === 'cholistan-pure-desi-ghee') || PRODUCTS[2];
+        onOpenSingleProduct(ghee);
+      },
+      secondaryText: 'View All Products',
+      secondaryAction: () => {
+        setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
     },
@@ -178,11 +206,6 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center min-h-[460px]">
             {/* Slide Text Content */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white border border-stone-300/80 rounded-full text-xs font-semibold text-[#155D27] shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-[#155D27] animate-pulse" />
-                <span>{slides[currentSlide].tag}</span>
-              </div>
-
               <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#0D3818] leading-[1.14]">
                 {slides[currentSlide].title}
               </h1>
@@ -243,32 +266,17 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* Slide Visual Presentation */}
-            <div className="lg:col-span-5 flex justify-center">
+            {/* Slide Visual Presentation - Full Height, 100% Never Cropped */}
+            <div className="lg:col-span-5 flex justify-center items-center">
               <div
                 onClick={slides[currentSlide].ctaAction}
-                className="relative max-w-md w-full bg-white rounded-3xl p-5 shadow-xl border border-stone-200/90 group cursor-pointer"
+                className="relative w-full max-w-md h-[400px] sm:h-[480px] lg:h-[510px] bg-white rounded-3xl p-6 shadow-xl border border-stone-200/90 group cursor-pointer flex items-center justify-center overflow-hidden"
               >
-                <div className="relative overflow-hidden rounded-2xl bg-[#F4EFE6] aspect-4/3 flex items-center justify-center">
-                  <img
-                    src={slides[currentSlide].image}
-                    alt={slides[currentSlide].title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-104"
-                  />
-                  <div className="absolute top-3 left-3 bg-[#155D27] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs">
-                    Pure & Natural
-                  </div>
-                </div>
-
-                <div className="mt-4 p-1 flex items-center justify-between text-xs text-stone-700">
-                  <span className="font-serif font-bold text-stone-900 text-sm">
-                    {slides[currentSlide].tag.split('·')[0]}
-                  </span>
-                  <span className="text-[#155D27] font-semibold flex items-center gap-1">
-                    <span>View Product</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </div>
+                <img
+                  src={slides[currentSlide].image}
+                  alt={slides[currentSlide].title}
+                  className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-102"
+                />
               </div>
             </div>
           </div>
@@ -514,34 +522,71 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 5. CURATED BOUTIQUE STORE (CARDS OPEN SINGLE PRODUCT PAGE) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* 5A. SLIDING CAROUSEL 1: FEATURED BOTANICAL ESSENTIALS & OILS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-4">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
-              100% Traceable Botanicals
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
+                Signature Formulations &amp; Premium Oils
+              </span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                Interactive Slider
+              </span>
+            </div>
             <h2 className="font-serif text-3xl font-bold text-[#0D3818] mt-1">
-              Curated Organic Store
+              Featured Flagship Collection
             </h2>
           </div>
-          <button
-            onClick={() => {
-              setActiveTab('products');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="text-xs font-semibold text-[#155D27] hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>View All Products</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setActiveTab('products');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="text-xs font-semibold text-[#155D27] hover:underline flex items-center gap-1 cursor-pointer mr-2"
+            >
+              <span>View All 16 Products</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Slider Navigation Buttons */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => scrollCarousel(featuredCarouselRef, 'left')}
+                className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+                aria-label="Previous products"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollCarousel(featuredCarouselRef, 'right')}
+                className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+                aria-label="Next products"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {PRODUCTS.map((prod) => (
+        {/* Carousel Scroll Track */}
+        <div
+          ref={featuredCarouselRef}
+          className="flex gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none"
+        >
+          {PRODUCTS.filter(
+            (p) =>
+              p.category === 'formula' ||
+              p.category === 'cooking-oil' ||
+              p.category === 'olive-oil' ||
+              p.category === 'honey' ||
+              p.category === 'ghee'
+          ).map((prod) => (
             <div
               key={prod.id}
-              className="bg-white rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
+              className="w-[280px] sm:w-[320px] shrink-0 snap-start bg-white rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
             >
               <div
                 onClick={() => onOpenSingleProduct(prod)}
@@ -557,21 +602,32 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {prod.badge}
                   </div>
                 )}
+                <div className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[#155D27] border border-stone-200">
+                  {prod.packagingType || 'Pack'} · {prod.weight}
+                </div>
               </div>
 
               <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-                <div onClick={() => onOpenSingleProduct(prod)} className="cursor-pointer">
-                  <div className="flex justify-between items-baseline text-[11px] text-stone-500 mb-1">
+                <div onClick={() => onOpenSingleProduct(prod)} className="cursor-pointer space-y-1">
+                  <div className="flex justify-between items-baseline text-[11px] text-stone-500">
                     <span className="uppercase tracking-wider font-semibold text-[#C28E3A]">
-                      {prod.weight}
+                      {prod.variants && prod.variants.length > 1
+                        ? `${prod.variants.length} Sizes Available`
+                        : prod.weight}
                     </span>
-                    <span className="text-emerald-700 font-medium">100% Pure</span>
+                    <span
+                      className={`font-semibold text-[10px] ${
+                        prod.delivery === 'Free' ? 'text-emerald-700' : 'text-stone-500'
+                      }`}
+                    >
+                      {prod.delivery === 'Free' ? 'Free Delivery' : 'Charges applied'}
+                    </span>
                   </div>
 
-                  <h3 className="font-serif font-bold text-lg text-stone-900 group-hover:text-[#155D27] transition-colors line-clamp-1">
+                  <h3 className="font-serif font-bold text-lg text-stone-900 group-hover:text-[#155D27] transition-colors truncate">
                     {prod.name}
                   </h3>
-                  <p className="text-xs text-stone-500 line-clamp-2 mt-1">
+                  <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
                     {prod.shortDescription}
                   </p>
                 </div>
@@ -581,19 +637,142 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <span className="font-serif text-xl font-bold text-[#155D27]">
                       PKR {prod.price.toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-stone-400">Cash on Delivery</span>
+                    <span className="text-[10px] text-stone-400">COD Available</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => onOpenSingleProduct(prod)}
-                      className="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-lg transition-colors text-center cursor-pointer"
+                      className="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer"
                     >
                       Product Page
                     </button>
                     <button
                       onClick={() => onAddToCart(prod, 1)}
-                      className="py-2.5 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold rounded-lg transition-colors text-center cursor-pointer shadow-xs"
+                      className="py-2.5 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer shadow-xs"
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 5B. SLIDING CAROUSEL 2: ORGANIC POWDERS, SUPERFOOD SEEDS & VITALITY */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
+                Hygienic Dehydrated Roots, Seeds &amp; Formulations
+              </span>
+              <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
+                Multi-Pack Sizes
+              </span>
+            </div>
+            <h2 className="font-serif text-3xl font-bold text-[#0D3818] mt-1">
+              Organic Powders &amp; Superfood Shelf
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => scrollCarousel(powdersCarouselRef, 'left')}
+              className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+              aria-label="Previous powders"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => scrollCarousel(powdersCarouselRef, 'right')}
+              className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+              aria-label="Next powders"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Carousel Track for Powders & Superfoods */}
+        <div
+          ref={powdersCarouselRef}
+          className="flex gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none"
+        >
+          {PRODUCTS.filter(
+            (p) =>
+              p.category === 'herbal-powder' ||
+              p.category === 'superfood' ||
+              p.category === 'vitality'
+          ).map((prod) => (
+            <div
+              key={prod.id}
+              className="w-[280px] sm:w-[320px] shrink-0 snap-start bg-white rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
+            >
+              <div
+                onClick={() => onOpenSingleProduct(prod)}
+                className="relative bg-[#FAF9F5] aspect-square overflow-hidden flex items-center justify-center p-4 cursor-pointer"
+              >
+                <img
+                  src={prod.image}
+                  alt={prod.name}
+                  className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-104"
+                />
+                {prod.badge && (
+                  <div className="absolute top-3 left-3 bg-[#C28E3A] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
+                    {prod.badge}
+                  </div>
+                )}
+                <div className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-stone-700 border border-stone-200">
+                  {prod.packagingType || 'Sache / Jar'}: {prod.weight}
+                </div>
+              </div>
+
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                <div onClick={() => onOpenSingleProduct(prod)} className="cursor-pointer space-y-1">
+                  <div className="flex justify-between items-baseline text-[11px] text-stone-500">
+                    <span className="uppercase tracking-wider font-semibold text-[#C28E3A]">
+                      {prod.variants && prod.variants.length > 1
+                        ? `${prod.variants.length} Pack Sizes`
+                        : prod.weight}
+                    </span>
+                    <span
+                      className={`font-semibold text-[10px] ${
+                        prod.delivery === 'Free' ? 'text-emerald-700' : 'text-stone-500'
+                      }`}
+                    >
+                      {prod.delivery === 'Free' ? 'Free Delivery' : 'Charges applied'}
+                    </span>
+                  </div>
+
+                  <h3 className="font-serif font-bold text-lg text-stone-900 group-hover:text-[#155D27] transition-colors truncate">
+                    {prod.name}
+                  </h3>
+                  <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                    {prod.shortDescription}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-stone-100 space-y-2.5">
+                  <div className="flex justify-between items-baseline">
+                    <span className="font-serif text-xl font-bold text-[#155D27]">
+                      PKR {prod.price.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-stone-400">Available</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => onOpenSingleProduct(prod)}
+                      className="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer"
+                    >
+                      Product Page
+                    </button>
+                    <button
+                      onClick={() => onAddToCart(prod, 1)}
+                      className="py-2.5 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer shadow-xs"
                     >
                       Add to Cart
                     </button>

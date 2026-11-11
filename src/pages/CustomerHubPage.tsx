@@ -10,8 +10,9 @@ import {
   UserCheck,
   Package,
 } from 'lucide-react';
-import { REVIEWS, COMPANY_INFO } from '../data/companyData';
-import { ReviewItem } from '../types';
+import { REVIEWS, COMPANY_INFO, PRODUCTS } from '../data/companyData';
+import { ReviewItem, AdminOrder } from '../types';
+import { syncFeedbackToFirestore } from '../lib/firebase';
 
 interface CustomerHubPageProps {
   onShowToast: (msg: string) => void;
@@ -21,13 +22,13 @@ export const CustomerHubPage: React.FC<CustomerHubPageProps> = ({ onShowToast })
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>(REVIEWS);
   const [reviewerName, setReviewerName] = useState('');
   const [reviewerCity, setReviewerCity] = useState('');
-  const [reviewerProduct, setReviewerProduct] = useState('Terra Herbs-8 (200g)');
+  const [reviewerProduct, setReviewerProduct] = useState('Terra Herbs-8');
   const [reviewerRating, setReviewerRating] = useState(5);
   const [reviewerComment, setReviewerComment] = useState('');
   const [trackingId, setTrackingId] = useState('');
   const [trackedOrder, setTrackedOrder] = useState<any | null>(null);
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newRev: ReviewItem = {
       id: `rev-${Date.now()}`,
@@ -40,33 +41,81 @@ export const CustomerHubPage: React.FC<CustomerHubPageProps> = ({ onShowToast })
       comment: reviewerComment,
     };
     setReviewsList([newRev, ...reviewsList]);
+    syncFeedbackToFirestore(newRev);
     setReviewerName('');
     setReviewerCity('');
     setReviewerComment('');
-    onShowToast('Thank you! Your verified review has been posted.');
+    onShowToast('Thank you! Your verified review has been posted & synced.');
   };
 
   const handleTrackOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!trackingId.trim()) return;
 
-    // Simulate order tracking lookup
+    // Check localStorage for genuine placed order
+    try {
+      const saved = localStorage.getItem('ammama_orders');
+      if (saved) {
+        const orderList: AdminOrder[] = JSON.parse(saved);
+        const match = orderList.find(
+          (o) => o.id.toUpperCase() === trackingId.trim().toUpperCase()
+        );
+        if (match) {
+          setTrackedOrder({
+            orderId: match.id,
+            status: match.status,
+            courier: `${match.courierCompany || 'TCS'} Express Pakistan`,
+            awb: match.courierTracking || `${match.courierCompany || 'TCS'}-${Math.floor(10000000 + Math.random() * 90000000)}`,
+            destination: `${match.customerCity}, Pakistan`,
+            bookingDate: match.date,
+            estimatedDelivery: 'Within 24-48 Hours',
+            items: match.items.map((i) => `${i.productName} (${i.quantity})`).join(', '),
+            payment: `${match.paymentMode} (PKR ${match.grandTotal.toLocaleString()})`,
+            steps: [
+              { label: 'Order Registered in SECP System', time: `${match.date} 10:15 AM`, done: true },
+              { label: 'Laboratory Batch Verification Passed', time: `${match.date} 02:40 PM`, done: true },
+              {
+                label: 'Handed to Courier at Peshawar / Islamabad Hub',
+                time: `${match.date} 06:10 PM`,
+                done: match.status === 'Dispatched' || match.status === 'Delivered',
+              },
+              {
+                label: 'In Transit to Regional Sorting Facility',
+                time: 'In Progress',
+                done: match.status === 'Dispatched' || match.status === 'Delivered',
+              },
+              {
+                label: 'Out for Courier Delivery',
+                time: match.status === 'Delivered' ? 'Delivered' : 'Expected Soon',
+                done: match.status === 'Delivered',
+              },
+            ],
+          });
+          onShowToast(`Found real booking for Order #${match.id}!`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Default simulated tracking lookup if test ID entered
     setTrackedOrder({
       orderId: trackingId.toUpperCase(),
       status: 'In Transit',
       courier: 'TCS Express Pakistan',
       awb: `TCS-${Math.floor(10000000 + Math.random() * 90000000)}`,
       destination: 'Lahore, Pakistan',
-      bookingDate: '06-Nov-2026',
-      estimatedDelivery: '08-Nov-2026',
-      items: 'Terra Herbs-8 (200g) × 2',
-      payment: 'Cash on Delivery (PKR 3,900)',
+      bookingDate: '10-Nov-2026',
+      estimatedDelivery: 'Within 24 Hours',
+      items: 'Terra Herbs-8 (200g) × 1',
+      payment: 'Cash on Delivery (PKR 1,450)',
       steps: [
-        { label: 'Order Registered in SECP System', time: '06-Nov 10:15 AM', done: true },
-        { label: 'Laboratory Batch Verification Passed', time: '06-Nov 02:40 PM', done: true },
-        { label: 'Handed to Courier at Islamabad Hub', time: '06-Nov 07:10 PM', done: true },
-        { label: 'In Transit to Regional Sorting Facility', time: '07-Nov 05:30 AM', done: true },
-        { label: 'Out for Courier Delivery', time: 'Expected Tomorrow', done: false },
+        { label: 'Order Registered in SECP System', time: '10-Nov 10:15 AM', done: true },
+        { label: 'Laboratory Batch Verification Passed', time: '10-Nov 02:40 PM', done: true },
+        { label: 'Handed to Courier at Peshawar Hub', time: '10-Nov 07:10 PM', done: true },
+        { label: 'In Transit to Regional Sorting Facility', time: '11-Nov 05:30 AM', done: true },
+        { label: 'Out for Courier Delivery', time: 'Expected Today', done: false },
       ],
     });
   };
@@ -303,12 +352,13 @@ export const CustomerHubPage: React.FC<CustomerHubPageProps> = ({ onShowToast })
               <select
                 value={reviewerProduct}
                 onChange={(e) => setReviewerProduct(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 rounded focus:border-[#1C432E] focus:outline-none"
+                className="w-full px-3 py-2 border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none text-xs bg-white"
               >
-                <option value="Terra Herbs-8 (200g)">Terra Herbs-8 (200g Protective Formula)</option>
-                <option value="Wild Potohar Sidr Honey (500g)">Wild Potohar Sidr Honey (500g)</option>
-                <option value="Organic Moringa Powder (150g)">Organic Moringa Powder (150g)</option>
-                <option value="A2 Vedic Bilona Desi Ghee (450g)">A2 Vedic Bilona Desi Ghee (450g)</option>
+                {PRODUCTS.map((p) => (
+                  <option key={p.id} value={p.name}>
+                    {p.name} ({p.weight})
+                  </option>
+                ))}
               </select>
             </div>
 

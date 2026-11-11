@@ -7,6 +7,7 @@ import { CustomCursor } from './components/CustomCursor';
 import { CartDrawer } from './components/CartDrawer';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { Toast } from './components/Toast';
+import { QuickWhatsAppButton } from './components/QuickWhatsAppButton';
 
 import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
@@ -36,9 +37,36 @@ export default function App() {
   const [cursorActive, setCursorActive] = useState<boolean>(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
 
+  // Listen to hash changes for direct product URLs e.g. #product/canola-cooking-oil
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#product/')) {
+        const prodId = hash.replace('#product/', '');
+        const found = PRODUCTS.find((p) => p.id === prodId);
+        if (found) {
+          setSelectedProductForPage(found);
+          setActiveTab('single-product');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else if (hash === '#admin') {
+        setActiveTab('admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#store' || hash === '#products') {
+        setActiveTab('products');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   const handleOpenSingleProduct = (product: Product) => {
     setSelectedProductForPage(product);
     setActiveTab('single-product');
+    window.location.hash = `#product/${product.id}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -51,19 +79,26 @@ export default function App() {
     }
   }, [cartItems]);
 
-  const handleAddToCart = (product: Product, quantity: number = 1) => {
+  const handleAddToCart = (product: Product, quantity: number = 1, variant?: any) => {
     setCartItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const existing = prev.find((item) =>
+        variant
+          ? item.product.id === product.id && item.selectedVariant?.id === variant.id
+          : item.product.id === product.id
+      );
       if (existing) {
         return prev.map((item) =>
-          item.product.id === product.id
+          (variant
+            ? item.product.id === product.id && item.selectedVariant?.id === variant.id
+            : item.product.id === product.id)
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, quantity, selectedVariant: variant }];
     });
-    setToastMessage(`Added ${quantity} × ${product.name} to cart.`);
+    const spec = variant ? ` (${variant.weight})` : '';
+    setToastMessage(`Added ${quantity} × ${product.name}${spec} to cart.`);
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
@@ -188,6 +223,9 @@ export default function App() {
         onAddToCart={handleAddToCart}
         onShowToast={setToastMessage}
       />
+
+      {/* Small Fixed Floating WhatsApp Contact Button */}
+      <QuickWhatsAppButton />
 
       {/* Feedback Toast Notification */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />

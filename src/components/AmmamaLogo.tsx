@@ -172,7 +172,7 @@ export const AmmamaLogo: React.FC<AmmamaLogoProps> = ({
             className={`font-sans tracking-widest uppercase font-semibold text-stone-500 ${dimensions.textSub}`}
             style={{ color: mutedTextColor }}
           >
-            Pure &amp; Natural Herbal Wellness · SECP Reg. 0303557
+            Pure &amp; Natural Herbal Wellness
           </span>
         </div>
       )}

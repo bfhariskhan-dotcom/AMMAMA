@@ -9,6 +9,9 @@ import {
   ShieldCheck,
   Sparkles,
   ArrowRight,
+  Share2,
+  Box,
+  Truck,
 } from 'lucide-react';
 import { Product } from '../types';
 import { PRODUCTS, COMPANY_INFO } from '../data/companyData';
@@ -35,6 +38,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
       setSelectedCategory(initialCategory);
     }
   }, [initialCategory]);
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [inquiryModalProduct, setInquiryModalProduct] = useState<Product | null>(null);
   const [inquiryName, setInquiryName] = useState('');
@@ -43,11 +47,15 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
   const [inquiryNote, setInquiryNote] = useState('');
 
   const categories = [
-    { id: 'all', label: 'All Products' },
-    { id: 'formula', label: 'Herbal Formulas' },
-    { id: 'olive-oil', label: 'Premium Olive Oils (5L)' },
-    { id: 'honey', label: 'Raw Honey' },
-    { id: 'ghee', label: 'Pure Desi Ghee' },
+    { id: 'all', label: 'All Products (16)' },
+    { id: 'formula', label: 'Flagship Formulas' },
+    { id: 'cooking-oil', label: 'Canola & Mustard Oils' },
+    { id: 'olive-oil', label: 'Imported Olive Oils' },
+    { id: 'honey', label: 'Raw Karak Honey' },
+    { id: 'ghee', label: 'Cholistan Desi Ghee' },
+    { id: 'herbal-powder', label: 'Organic Powders' },
+    { id: 'superfood', label: 'Chia & Kalonji Seeds' },
+    { id: 'vitality', label: 'Vitality & Stamina' },
   ];
 
   const filteredProducts = PRODUCTS.filter((p) => {
@@ -62,8 +70,15 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     return matchesCategory && matchesSearch;
   });
 
+  const handleCopyLink = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}${window.location.pathname}#product/${product.id}`;
+    navigator.clipboard.writeText(url);
+    onShowToast(`Direct link for ${product.name} copied to clipboard!`);
+  };
+
   const handleDirectWhatsAppOrder = (product: Product) => {
-    const message = `Assalam-o-Alaikum AMMAMA Foods (UCI: ${COMPANY_INFO.uci}),\nI want to place an order for:\n• ${product.name} (${product.weight}) - Price: PKR ${product.price.toLocaleString()}\nPlease guide me on delivery and confirmation.`;
+    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (UCI: ${COMPANY_INFO.uci}),\nI want to place an order for:\n• ${product.name} (${product.packagingType || ''} - ${product.weight}) - Price: PKR ${product.price.toLocaleString()}\nPlease guide me on delivery and confirmation.`;
     window.open(`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
     onShowToast(`Opening WhatsApp order for ${product.name}...`);
   };
@@ -72,7 +87,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     e.preventDefault();
     if (!inquiryModalProduct) return;
 
-    const message = `Assalam-o-Alaikum AMMAMA Foods (UCI: ${COMPANY_INFO.uci}),\nOrder Inquiry for: ${inquiryModalProduct.name}\nQuantity: ${inquiryQty}\nCustomer: ${inquiryName}\nCity: ${inquiryCity}\nNote: ${inquiryNote || 'Standard order'}`;
+    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (UCI: ${COMPANY_INFO.uci}),\nOrder Inquiry for: ${inquiryModalProduct.name}\nQuantity: ${inquiryQty}\nCustomer: ${inquiryName}\nCity: ${inquiryCity}\nNote: ${inquiryNote || 'Standard order'}`;
     window.open(`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
     setInquiryModalProduct(null);
     onShowToast('Direct sell order initiated on WhatsApp!');
@@ -83,15 +98,17 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-stone-200">
         <div className="max-w-2xl space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
-            <ShieldCheck className="w-4 h-4 text-[#1C432E]" />
-            <span>Unadulterated Whole-Plant Harvest</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#155D27] bg-[#155D27]/10 px-2.5 py-0.5 rounded-full">
+              Full Organic Catalog
+            </span>
+            <span className="text-xs text-stone-400">· 16 Verified Formulations</span>
           </div>
           <h1 className="font-serif text-4xl sm:text-5xl font-bold text-[#142A1E]">
-            Pure Organic Products
+            Ammama Wellness Shelf
           </h1>
           <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
-            Formulated and preserved in Pakistan with verified botanical proportions, zero chemical additives, and complete laboratory transparency.
+            Formulated and preserved in Pakistan with verified botanical proportions, multi-size packaging options, zero chemical additives, and complete laboratory transparency.
           </p>
         </div>
 
@@ -102,8 +119,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search herbs, honey, ghee..."
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-stone-300 rounded-md text-xs focus:border-[#1C432E] focus:outline-none shadow-2xs"
+            placeholder="Search oils, herbs, honey, ghee..."
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-stone-300 rounded-xl text-xs focus:border-[#1C432E] focus:outline-none shadow-2xs"
           />
         </div>
       </div>
@@ -114,7 +131,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               selectedCategory === cat.id
                 ? 'bg-[#1C432E] text-white shadow-xs'
                 : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200'
@@ -130,7 +147,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         {filteredProducts.map((product) => (
           <div
             key={product.id}
-            className={`bg-white rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group shadow-2xs hover:shadow-md ${
+            className={`bg-white rounded-3xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group shadow-2xs hover:shadow-lg ${
               product.isFlagship
                 ? 'border-[#C28E3A]/60 ring-1 ring-[#C28E3A]/20'
                 : 'border-stone-200 hover:border-stone-300'
@@ -139,32 +156,48 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
             {/* Image Box */}
             <div
               onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
-              className="relative bg-[#F4EFE6] aspect-4/3 overflow-hidden flex items-center justify-center p-4 cursor-pointer"
+              className="relative bg-[#FAF9F5] aspect-4/3 overflow-hidden flex items-center justify-center p-6 cursor-pointer"
             >
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-103"
+                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-104"
               />
 
               {product.badge && (
-                <div className="absolute top-3 left-3 bg-[#1C432E] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-xs">
+                <div className="absolute top-3 left-3 bg-[#1C432E] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
                   {product.badge}
                 </div>
               )}
 
-              {/* Quick eye modal trigger */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenProductModal(product);
-                }}
-                className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
-                title="View Full Botanical Details"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
+              <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                {/* Share Link Button */}
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyLink(product, e)}
+                  className="p-2 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
+                  title="Copy Product Link"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Quick eye modal trigger */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenProductModal(product);
+                  }}
+                  className="p-2 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
+                  title="View Botanical Specs"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="absolute bottom-3 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-stone-700 border border-stone-200">
+                {product.packagingType || 'Packaging'}: {product.weight}
+              </div>
             </div>
 
             {/* Product Body */}
@@ -172,75 +205,74 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-stone-500">
                   <span className="uppercase tracking-wider font-semibold text-[#C28E3A]">
-                    {product.weight}
+                    {product.variants && product.variants.length > 1
+                      ? `${product.variants.length} Sizes Available`
+                      : product.weight}
                   </span>
-                  <span className="font-mono text-xs text-emerald-800 font-medium">
-                    100% Organic
+                  <span
+                    className={`font-semibold text-[10px] px-2 py-0.5 rounded-full ${
+                      product.delivery === 'Free'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-stone-100 text-stone-600'
+                    }`}
+                  >
+                    {product.delivery === 'Free' ? 'Free Delivery' : 'Charges Applied'}
                   </span>
                 </div>
 
                 <h3
                   onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
-                  className="font-serif text-xl font-bold text-stone-900 group-hover:text-[#1C432E] transition-colors cursor-pointer"
+                  className="font-serif font-bold text-xl text-stone-900 group-hover:text-[#1C432E] transition-colors cursor-pointer"
                 >
                   {product.name}
                 </h3>
-                <p className="text-xs text-stone-500 italic">{product.subtitle}</p>
 
-                <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
                   {product.shortDescription}
                 </p>
 
-                {/* Composition teaser for Terra Herbs-8 */}
-                {product.composition && (
-                  <div className="pt-2 border-t border-stone-100">
-                    <span className="text-[10px] uppercase font-bold text-stone-400 block mb-1">
-                      Formula Composition:
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {product.composition.slice(0, 4).map((c, i) => (
-                        <span
-                          key={i}
-                          className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded"
-                        >
-                          {c.ingredient} ({c.amount})
-                        </span>
-                      ))}
-                      <span className="text-[10px] text-stone-500 font-medium self-center">
-                        +4 more
+                {product.variants && product.variants.length > 1 && (
+                  <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
+                    {product.variants.map((v) => (
+                      <span key={v.id} className="bg-stone-100 px-2 py-0.5 rounded text-stone-600 font-mono">
+                        {v.weight}
                       </span>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Price & Actions */}
-              <div className="pt-4 border-t border-stone-100 space-y-2">
+              {/* Price & Purchase Actions */}
+              <div className="pt-4 border-t border-stone-100 space-y-3">
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <span className="text-[11px] text-stone-400 block">Retail Price</span>
-                    <span className="font-serif text-xl font-bold text-[#1C432E]">
+                    <span className="text-[10px] text-stone-400 block uppercase tracking-wider">
+                      {product.variants && product.variants.length > 1 ? 'Starting from' : 'Price'}
+                    </span>
+                    <span className="font-serif font-bold text-2xl text-[#1C432E]">
                       PKR {product.price.toLocaleString()}
                     </span>
                   </div>
-                  <span className="text-[11px] text-stone-500">Cash on Delivery</span>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    COD Available
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => onAddToCart(product, 1)}
-                    className="py-2.5 px-3 bg-[#1C432E] hover:bg-[#25573C] text-white text-xs font-semibold uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
+                    className="py-2.5 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer flex items-center justify-center gap-1"
                   >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    Add to Cart
+                    <span>View Page</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
 
                   <button
-                    onClick={() => setInquiryModalProduct(product)}
-                    className="py-2.5 px-3 bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-semibold rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    onClick={() => onAddToCart(product, 1)}
+                    className="py-2.5 px-3 bg-[#1C432E] hover:bg-[#25573C] text-white text-xs font-semibold rounded-xl transition-colors text-center cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    Order / Sell
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Add to Cart</span>
                   </button>
                 </div>
               </div>
@@ -249,123 +281,70 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         ))}
       </div>
 
-      {filteredProducts.length === 0 && (
-        <div className="py-16 text-center space-y-3 bg-white rounded-xl border border-stone-200">
-          <p className="text-stone-600 font-medium">No products found matching "{searchQuery}".</p>
-          <button
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCategory('all');
-            }}
-            className="text-xs text-[#1C432E] font-semibold underline"
-          >
-            Clear all filters
-          </button>
-        </div>
-      )}
-
-      {/* WhatsApp Sell Order & Inquiry Modal */}
+      {/* Direct Sell / Customer Inquiry Floating Modal */}
       {inquiryModalProduct && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs"
-            onClick={() => setInquiryModalProduct(null)}
-          />
-          <div className="min-h-full flex items-center justify-center p-4">
-            <div className="relative bg-white max-w-md w-full rounded-xl shadow-2xl p-6 space-y-4 border border-stone-200">
-              <div className="flex items-start justify-between border-b border-stone-200 pb-3">
-                <div>
-                  <span className="text-[10px] font-bold text-[#C28E3A] uppercase tracking-wider">
-                    Direct Sell Order / Customer Inquiry
-                  </span>
-                  <h3 className="font-serif text-lg font-bold text-stone-900 mt-0.5">
-                    {inquiryModalProduct.name}
-                  </h3>
-                  <p className="text-xs text-stone-500">
-                    Unit Price: PKR {inquiryModalProduct.price.toLocaleString()} ({inquiryModalProduct.weight})
-                  </p>
-                </div>
-                <button
-                  onClick={() => setInquiryModalProduct(null)}
-                  className="p-1 text-stone-400 hover:text-stone-700"
-                >
-                  ✕
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-stone-200 shadow-2xl space-y-4">
+            <h3 className="font-serif font-bold text-xl text-stone-900">
+              Order Inquiry: {inquiryModalProduct.name}
+            </h3>
+            <p className="text-xs text-stone-500">
+              Submit your details to connect directly with AMMAMA customer logistics via WhatsApp for immediate courier dispatch.
+            </p>
+
+            <form onSubmit={handleConfirmInquiry} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Your Name</label>
+                <input
+                  type="text"
+                  required
+                  value={inquiryName}
+                  onChange={(e) => setInquiryName(e.target.value)}
+                  placeholder="e.g. Tariq Mehmood"
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
+                />
               </div>
 
-              <form onSubmit={handleConfirmInquiry} className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
-                    Your Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={inquiryName}
-                    onChange={(e) => setInquiryName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full px-3 py-2 border border-stone-300 rounded focus:border-[#1C432E] focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Destination City</label>
+                <input
+                  type="text"
+                  required
+                  value={inquiryCity}
+                  onChange={(e) => setInquiryCity(e.target.value)}
+                  placeholder="e.g. Peshawar, Lahore, Islamabad"
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
+                />
+              </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-semibold text-stone-700 mb-1">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={inquiryCity}
-                      onChange={(e) => setInquiryCity(e.target.value)}
-                      placeholder="e.g. Lahore / Islamabad"
-                      className="w-full px-3 py-2 border border-stone-300 rounded focus:border-[#1C432E] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-stone-700 mb-1">
-                      Quantity (Jars)
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={inquiryQty}
-                      onChange={(e) => setInquiryQty(parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 border border-stone-300 rounded focus:border-[#1C432E] focus:outline-none"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="text-xs font-semibold text-stone-700 block mb-1">Quantity</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={inquiryQty}
+                  onChange={(e) => setInquiryQty(Number(e.target.value))}
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
+                />
+              </div>
 
-                <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
-                    Order Note / Specific Question
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={inquiryNote}
-                    onChange={(e) => setInquiryNote(e.target.value)}
-                    placeholder="e.g. Please confirm delivery time to Gulberg, Lahore"
-                    className="w-full px-3 py-2 border border-stone-300 rounded focus:border-[#1C432E] focus:outline-none"
-                  />
-                </div>
-
-                <div className="p-3 bg-stone-50 rounded border border-stone-200 flex justify-between items-center font-semibold">
-                  <span>Estimated Total:</span>
-                  <span className="font-mono text-[#1C432E] text-sm">
-                    PKR {(inquiryModalProduct.price * inquiryQty).toLocaleString()}
-                  </span>
-                </div>
-
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setInquiryModalProduct(null)}
+                  className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-semibold rounded flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  className="flex-1 py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Send Order via WhatsApp
+                  <span>Send via WhatsApp</span>
                 </button>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

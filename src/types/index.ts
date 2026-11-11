@@ -1,10 +1,21 @@
+export interface ProductVariant {
+  id: string;
+  packagingType: 'Bottle' | 'Tin' | 'Jar' | 'Sache' | 'Stand up Pouch' | 'Bottle- 10' | string;
+  weight: string;
+  price: number;
+  delivery: 'Free' | 'Charges applied';
+}
+
 export interface Product {
   id: string;
   name: string;
   subtitle: string;
-  category: 'formula' | 'honey' | 'superfood' | 'ghee' | 'wellness' | 'olive-oil';
-  price: number; // in PKR
-  weight: string;
+  category: 'formula' | 'honey' | 'superfood' | 'ghee' | 'wellness' | 'olive-oil' | 'cooking-oil' | 'herbal-powder' | 'vitality';
+  packagingType?: 'Bottle' | 'Tin' | 'Jar' | 'Sache' | 'Stand up Pouch' | 'Bottle- 10' | string;
+  price: number; // in PKR base price
+  weight: string; // base weight
+  delivery?: 'Free' | 'Charges applied';
+  variants?: ProductVariant[];
   image: string;
   badge?: string;
   isFlagship?: boolean;
@@ -25,6 +36,7 @@ export interface Product {
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedVariant?: ProductVariant;
 }
 
 export interface AdminOrder {
@@ -35,6 +47,8 @@ export interface AdminOrder {
   customerAddress: string;
   items: {
     productName: string;
+    packagingType?: string;
+    weight?: string;
     quantity: number;
     price: number;
   }[];
@@ -45,6 +59,7 @@ export interface AdminOrder {
   status: 'Pending' | 'QC Verified' | 'Dispatched' | 'Delivered' | 'Cancelled';
   date: string;
   courierTracking?: string;
+  courierCompany?: 'TCS' | 'Leopards' | 'M&P' | 'Call Courier' | 'Trax';
 }
 
 export interface JobPosition {

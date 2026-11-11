@@ -30,16 +30,6 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
               Pure organic foods &amp; herbal formulas crafted with authentic botanical integrity. Formulated to support vital organs, natural vitality, and cellular longevity.
             </p>
-
-            <div className="space-y-1.5 text-xs text-[#E6C687]">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 shrink-0" />
-                <span>SECP Corporate Identity: No. <strong>{COMPANY_INFO.uci}</strong></span>
-              </div>
-              <p className="text-[11px] text-stone-400 pl-6">
-                Section 16 of the Companies Act-2017
-              </p>
-            </div>
           </div>
 
           {/* Catalog Links */}

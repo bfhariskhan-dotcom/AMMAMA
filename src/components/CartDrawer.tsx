@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { CartItem } from '../types';
+import { X, Trash2, Plus, Minus, ArrowRight, ShieldCheck, CheckCircle2, MessageCircle } from 'lucide-react';
+import { CartItem, AdminOrder } from '../types';
 import { COMPANY_INFO } from '../data/companyData';
+import { syncOrderToFirestore } from '../lib/firebase';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -26,70 +27,91 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
-  const [customerCity, setCustomerCity] = useState('Islamabad');
+  const [customerCity, setCustomerCity] = useState('Peshawar');
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'ibft'>('cod');
   const [orderNumber, setOrderNumber] = useState('');
 
   if (!isOpen) return null;
 
-  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const deliveryFee = subtotal >= 3500 || items.length === 0 ? 0 : 250;
+  // Calculate pricing based on variants if selected
+  const subtotal = items.reduce((sum, item) => {
+    const unitPrice = item.selectedVariant ? item.selectedVariant.price : item.product.price;
+    return sum + unitPrice * item.quantity;
+  }, 0);
+
+  // Check if all items qualify for Free delivery
+  const allFreeDelivery = items.length > 0 && items.every((i) => {
+    const itemDelivery = i.selectedVariant?.delivery || i.product.delivery;
+    return itemDelivery === 'Free';
+  });
+
+  const deliveryFee = allFreeDelivery || subtotal >= 5000 || items.length === 0 ? 0 : 200;
   const grandTotal = subtotal + deliveryFee;
 
   const handleWhatsAppCheckout = () => {
     if (items.length === 0) return;
 
     const itemsSummary = items
-      .map((item) => `• ${item.product.name} (Qty: ${item.quantity}) - PKR ${(item.product.price * item.quantity).toLocaleString()}`)
+      .map((item) => {
+        const unitPrice = item.selectedVariant ? item.selectedVariant.price : item.product.price;
+        const spec = item.selectedVariant ? ` (${item.selectedVariant.packagingType} · ${item.selectedVariant.weight})` : ` (${item.product.weight})`;
+        return `• ${item.product.name}${spec} (Qty: ${item.quantity}) - PKR ${(unitPrice * item.quantity).toLocaleString()}`;
+      })
       .join('\n');
 
-    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (UCI: ${COMPANY_INFO.uci})\n\nI would like to place an order:\n${itemsSummary}\n\nSubtotal: PKR ${subtotal.toLocaleString()}\nDelivery: ${deliveryFee === 0 ? 'FREE' : `PKR ${deliveryFee}`}\nGrand Total: PKR ${grandTotal.toLocaleString()}\n\nMy details:\nName: ${customerName || '[Your Name]'}\nCity: ${customerCity}\nAddress: ${customerAddress || '[Delivery Address]'}\nPayment: Cash on Delivery (COD)`;
+    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (SECP UCI: ${COMPANY_INFO.uci})\n\nI would like to place an order:\n${itemsSummary}\n\nSubtotal: PKR ${subtotal.toLocaleString()}\nDelivery: ${deliveryFee === 0 ? 'FREE' : `PKR ${deliveryFee}`}\nGrand Total: PKR ${grandTotal.toLocaleString()}\n\nMy details:\nName: ${customerName || '[Your Name]'}\nCity: ${customerCity}\nAddress: ${customerAddress || '[Delivery Address]'}\nPayment: Cash on Delivery (COD)`;
 
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encoded}`, '_blank');
     onShowToast('Connecting you with Ammama Wellness Shelf WhatsApp helpline...');
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !customerPhone || !customerAddress) {
-      alert('Please fill out all delivery fields');
+      onShowToast('Please fill out all required delivery fields');
       return;
     }
 
     const generatedId = `AMM-${Math.floor(100000 + Math.random() * 900000)}`;
     setOrderNumber(generatedId);
 
-    // Save to local storage for Admin Panel
+    const newOrder: AdminOrder = {
+      id: generatedId,
+      customerName,
+      customerPhone,
+      customerCity,
+      customerAddress,
+      items: items.map((i) => ({
+        productName: i.product.name,
+        packagingType: i.selectedVariant?.packagingType || i.product.packagingType,
+        weight: i.selectedVariant?.weight || i.product.weight,
+        quantity: i.quantity,
+        price: i.selectedVariant ? i.selectedVariant.price : i.product.price,
+      })),
+      subtotal,
+      deliveryFee,
+      grandTotal,
+      paymentMode: paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Direct Bank Transfer (IBFT)',
+      status: 'Pending',
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    };
+
+    // Save to local storage
     try {
       const existing = localStorage.getItem('ammama_orders');
       const orderList = existing ? JSON.parse(existing) : [];
-      const newOrder = {
-        id: generatedId,
-        customerName,
-        customerPhone,
-        customerCity,
-        customerAddress,
-        items: items.map((i) => ({
-          productName: i.product.name,
-          quantity: i.quantity,
-          price: i.product.price,
-        })),
-        subtotal,
-        deliveryFee,
-        grandTotal,
-        paymentMode: paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Direct Bank Transfer (IBFT)',
-        status: 'Pending',
-        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      };
       localStorage.setItem('ammama_orders', JSON.stringify([newOrder, ...orderList]));
     } catch (err) {
-      console.error('Could not save order:', err);
+      console.error('Could not save order locally:', err);
     }
+
+    // Sync to Firebase Firestore live
+    syncOrderToFirestore(newOrder);
 
     setCheckoutStep('success');
     onClearCart();
-    onShowToast(`Order #${generatedId} booked successfully!`);
+    onShowToast(`Order #${generatedId} placed and synced to Firebase!`);
   };
 
   return (
@@ -115,89 +137,99 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-stone-500 hover:text-stone-800 rounded-md transition-colors"
+              className="p-2 text-stone-500 hover:text-stone-800 rounded-md transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Content Body */}
+          {/* Body Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {checkoutStep === 'cart' && (
               <>
                 {items.length === 0 ? (
-                  <div className="py-16 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-stone-100 mx-auto flex items-center justify-center text-stone-400">
-                      <ShieldCheck className="w-8 h-8" />
-                    </div>
-                    <p className="text-stone-600 font-medium">Your shopping cart is empty.</p>
-                    <p className="text-xs text-stone-500">
-                      Explore our flagship Terra Herbs-8 and pure organic products.
-                    </p>
+                  <div className="py-16 text-center space-y-3">
+                    <p className="text-stone-500 text-sm">Your shopping cart is currently empty.</p>
+                    <button
+                      onClick={onClose}
+                      className="px-4 py-2 bg-[#1C432E] text-white text-xs font-semibold uppercase tracking-wider rounded-md hover:bg-[#25573C] cursor-pointer"
+                    >
+                      Start Shopping
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {items.map((item) => (
-                      <div
-                        key={item.product.id}
-                        className="flex gap-4 p-3 bg-white rounded-lg border border-stone-200 shadow-2xs"
-                      >
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-18 h-18 object-cover rounded-md bg-stone-100 shrink-0 border border-stone-100"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-serif font-bold text-sm text-stone-900 truncate">
-                            {item.product.name}
-                          </h4>
-                          <p className="text-xs text-stone-500">{item.product.weight}</p>
-                          <p className="text-sm font-semibold text-[#1C432E] mt-1">
-                            PKR {item.product.price.toLocaleString()}
-                          </p>
+                    {items.map((item, idx) => {
+                      const unitPrice = item.selectedVariant ? item.selectedVariant.price : item.product.price;
+                      const spec = item.selectedVariant
+                        ? `${item.selectedVariant.packagingType} · ${item.selectedVariant.weight}`
+                        : item.product.weight;
 
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center border border-stone-200 rounded-md bg-stone-50">
+                      return (
+                        <div
+                          key={`${item.product.id}-${idx}`}
+                          className="flex gap-4 p-3 bg-white rounded-xl border border-stone-200 shadow-2xs"
+                        >
+                          <div className="w-16 h-16 bg-[#F4EFE6] rounded-lg overflow-hidden flex items-center justify-center p-1 shrink-0">
+                            <img
+                              src={item.product.image}
+                              alt={item.product.name}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-serif font-bold text-sm text-stone-900 truncate">
+                              {item.product.name}
+                            </h4>
+                            <p className="text-[11px] text-[#C28E3A] font-semibold">{spec}</p>
+                            <p className="text-xs font-bold text-[#1C432E] mt-0.5">
+                              PKR {unitPrice.toLocaleString()}
+                            </p>
+
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center border border-stone-200 rounded-md bg-stone-50">
+                                <button
+                                  onClick={() =>
+                                    onUpdateQuantity(item.product.id, Math.max(1, item.quantity - 1))
+                                  }
+                                  className="px-2 py-0.5 text-stone-600 hover:text-stone-900 cursor-pointer"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="px-2 text-xs font-mono font-medium">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    onUpdateQuantity(item.product.id, item.quantity + 1)
+                                  }
+                                  className="px-2 py-0.5 text-stone-600 hover:text-stone-900 cursor-pointer"
+                                  aria-label="Increase quantity"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+
                               <button
-                                onClick={() =>
-                                  onUpdateQuantity(item.product.id, Math.max(1, item.quantity - 1))
-                                }
-                                className="px-2 py-0.5 text-stone-600 hover:text-stone-900"
-                                aria-label="Decrease quantity"
+                                onClick={() => onRemoveItem(item.product.id)}
+                                className="text-stone-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
+                                aria-label="Remove item"
                               >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="px-2 text-xs font-mono font-medium">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  onUpdateQuantity(item.product.id, item.quantity + 1)
-                                }
-                                className="px-2 py-0.5 text-stone-600 hover:text-stone-900"
-                                aria-label="Increase quantity"
-                              >
-                                <Plus className="w-3 h-3" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-
-                            <button
-                              onClick={() => onRemoveItem(item.product.id)}
-                              className="text-stone-400 hover:text-rose-600 transition-colors p-1"
-                              aria-label="Remove item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* Subtotal & Free Delivery Progress */}
                 {items.length > 0 && (
-                  <div className="p-4 bg-[#F2EDE4] rounded-lg border border-[#E2D8C6] space-y-2 text-xs text-stone-700">
+                  <div className="p-4 bg-[#F2EDE4] rounded-xl border border-[#E2D8C6] space-y-2 text-xs text-stone-700">
                     <div className="flex justify-between font-medium">
                       <span>Products Subtotal</span>
                       <span className="font-mono text-stone-900 font-semibold">
@@ -205,12 +237,18 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Delivery Fee (Nationwide)</span>
-                      <span>{deliveryFee === 0 ? <strong className="text-emerald-700">FREE</strong> : `PKR ${deliveryFee}`}</span>
+                      <span>Nationwide Delivery</span>
+                      <span>
+                        {deliveryFee === 0 ? (
+                          <strong className="text-emerald-700 font-bold">FREE</strong>
+                        ) : (
+                          `PKR ${deliveryFee}`
+                        )}
+                      </span>
                     </div>
-                    {subtotal < 3500 && (
+                    {deliveryFee > 0 && subtotal < 5000 && (
                       <p className="text-[11px] text-stone-600 pt-1 border-t border-[#E2D8C6]">
-                        Add <strong>PKR {(3500 - subtotal).toLocaleString()}</strong> more to get Free Nationwide Delivery!
+                        Add <strong>PKR {(5000 - subtotal).toLocaleString()}</strong> more for Free Nationwide Delivery!
                       </p>
                     )}
                   </div>
@@ -220,7 +258,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
             {checkoutStep === 'checkout' && (
               <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-4">
-                <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-md text-xs">
+                <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl text-xs">
                   Pay securely via <strong>Cash on Delivery (COD)</strong> upon receiving your sealed parcel anywhere in Pakistan.
                 </div>
 
@@ -233,8 +271,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="e.g. Tariq Mehmood"
-                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-md focus:border-[#1C432E] focus:outline-none"
+                    placeholder="e.g. Muhammad Bilal"
+                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
                   />
                 </div>
 
@@ -247,45 +285,30 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     required
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="0300 1234567"
-                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-md focus:border-[#1C432E] focus:outline-none"
+                    placeholder="0314-8973162"
+                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">
-                      City *
-                    </label>
-                    <select
-                      value={customerCity}
-                      onChange={(e) => setCustomerCity(e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-md focus:border-[#1C432E] focus:outline-none"
-                    >
-                      <option value="Islamabad">Islamabad</option>
-                      <option value="Rawalpindi">Rawalpindi</option>
-                      <option value="Lahore">Lahore</option>
-                      <option value="Karachi">Karachi</option>
-                      <option value="Peshawar">Peshawar</option>
-                      <option value="Faisalabad">Faisalabad</option>
-                      <option value="Multan">Multan</option>
-                      <option value="Quetta">Quetta</option>
-                      <option value="Other">Other City</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">
-                      Payment Mode
-                    </label>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value as 'cod' | 'ibft')}
-                      className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-md focus:border-[#1C432E] focus:outline-none"
-                    >
-                      <option value="cod">Cash on Delivery (COD)</option>
-                      <option value="ibft">Direct Bank Transfer (IBFT)</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    City *
+                  </label>
+                  <select
+                    value={customerCity}
+                    onChange={(e) => setCustomerCity(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
+                  >
+                    <option value="Peshawar">Peshawar</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Rawalpindi">Rawalpindi</option>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Karachi">Karachi</option>
+                    <option value="Faisalabad">Faisalabad</option>
+                    <option value="Multan">Multan</option>
+                    <option value="Quetta">Quetta</option>
+                    <option value="Other City">Other Nationwide Destination</option>
+                  </select>
                 </div>
 
                 <div>
@@ -294,119 +317,129 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </label>
                   <textarea
                     required
-                    rows={2}
+                    rows={3}
                     value={customerAddress}
                     onChange={(e) => setCustomerAddress(e.target.value)}
-                    placeholder="House / Apartment #, Street #, Sector / Area"
-                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-md focus:border-[#1C432E] focus:outline-none"
+                    placeholder="House/Shop No, Street, Sector, Landmark..."
+                    className="w-full px-3 py-2 text-sm bg-white border border-stone-300 rounded-xl focus:border-[#1C432E] focus:outline-none"
                   />
                 </div>
 
-                <div className="p-3 bg-stone-100 rounded-md text-xs space-y-1">
-                  <div className="flex justify-between font-semibold text-stone-900">
-                    <span>Payable on Delivery:</span>
-                    <span className="font-mono text-sm text-[#1C432E]">
-                      PKR {grandTotal.toLocaleString()}
-                    </span>
+                <div className="space-y-2 pt-2 border-t border-stone-200">
+                  <span className="block text-xs font-semibold text-stone-700">
+                    Payment Method
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cod')}
+                      className={`p-2.5 rounded-xl border text-center font-semibold cursor-pointer ${
+                        paymentMethod === 'cod'
+                          ? 'border-[#1C432E] bg-[#1C432E]/10 text-[#1C432E]'
+                          : 'border-stone-200 bg-white text-stone-600'
+                      }`}
+                    >
+                      Cash on Delivery
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('ibft')}
+                      className={`p-2.5 rounded-xl border text-center font-semibold cursor-pointer ${
+                        paymentMethod === 'ibft'
+                          ? 'border-[#1C432E] bg-[#1C432E]/10 text-[#1C432E]'
+                          : 'border-stone-200 bg-white text-stone-600'
+                      }`}
+                    >
+                      Bank Transfer
+                    </button>
                   </div>
-                  <p className="text-[11px] text-stone-500">
-                    Inspected & packed in accordance with PSQCA food packaging norms.
-                  </p>
                 </div>
               </form>
             )}
 
             {checkoutStep === 'success' && (
               <div className="py-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#1C432E] mx-auto flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10" />
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="font-serif text-xl font-bold text-stone-900">
-                  Order Successfully Booked!
-                </h3>
-                <p className="text-xs text-stone-600">
-                  Thank you, <strong>{customerName}</strong>. Your order has been registered in the AMMAMA Foods dispatch queue.
-                </p>
-                <div className="p-4 bg-white border border-stone-200 rounded-lg text-left text-xs space-y-1.5">
-                  <p className="text-stone-500">
-                    Order Reference:{' '}
-                    <strong className="font-mono text-stone-900 text-sm">{orderNumber}</strong>
+                <div className="space-y-1">
+                  <h3 className="font-serif text-xl font-bold text-stone-900">
+                    Order Booked Successfully!
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Your tracking reference ID is:
                   </p>
-                  <p className="text-stone-500">
-                    Delivery City: <strong className="text-stone-800">{customerCity}</strong>
-                  </p>
-                  <p className="text-stone-500">
-                    Payment: <strong className="text-stone-800">Cash on Delivery (PKR {grandTotal.toLocaleString()})</strong>
-                  </p>
-                  <p className="text-stone-500">
-                    Corporate Entity: <strong>AMMAMA FOODS (PVT.) LTD. (UCI 0303557)</strong>
-                  </p>
+                  <div className="inline-block px-3 py-1 bg-stone-100 border border-stone-300 rounded font-mono font-bold text-sm text-[#1C432E]">
+                    {orderNumber}
+                  </div>
                 </div>
-                <p className="text-[11px] text-stone-500">
-                  Our dispatch coordinator will contact your number ({customerPhone}) prior to courier handover.
+
+                <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed">
+                  Our dispatch team will verify your parcel with PSQCA batch lab testing and dispatch via courier. You will receive an SMS confirmation shortly.
                 </p>
+
+                <div className="pt-4 flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      setCheckoutStep('cart');
+                      onClose();
+                    }}
+                    className="w-full py-2.5 bg-[#1C432E] text-white text-xs font-semibold uppercase tracking-wider rounded-xl cursor-pointer"
+                  >
+                    Continue Shopping
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
           {/* Footer Actions */}
-          <div className="p-6 border-t border-stone-200 bg-white space-y-3">
-            {checkoutStep === 'cart' && items.length > 0 && (
-              <>
-                <div className="flex justify-between items-baseline mb-2">
-                  <span className="text-sm text-stone-600">Estimated Total</span>
-                  <span className="font-serif text-xl font-bold text-[#1C432E]">
-                    PKR {grandTotal.toLocaleString()}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => setCheckoutStep('checkout')}
-                  className="w-full py-3 px-4 bg-[#1C432E] text-white rounded-md font-semibold text-sm hover:bg-[#25573C] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                >
-                  Proceed to Checkout <ArrowRight className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={handleWhatsAppCheckout}
-                  className="w-full py-2.5 px-4 bg-[#25D366] text-white rounded-md font-semibold text-xs hover:bg-[#1EBE5D] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                >
-                  Order Directly via WhatsApp
-                </button>
-              </>
-            )}
-
-            {checkoutStep === 'checkout' && (
-              <div className="space-y-2">
-                <button
-                  type="submit"
-                  form="checkout-form"
-                  className="w-full py-3 px-4 bg-[#1C432E] text-white rounded-md font-semibold text-sm hover:bg-[#25573C] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                >
-                  Confirm Cash on Delivery Order
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCheckoutStep('cart')}
-                  className="w-full py-2 text-xs text-stone-600 hover:text-stone-900 font-medium"
-                >
-                  Back to Cart
-                </button>
+          {items.length > 0 && checkoutStep !== 'success' && (
+            <div className="p-6 bg-white border-t border-stone-200 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-stone-600">Total Payable:</span>
+                <span className="font-serif font-bold text-xl text-[#1C432E]">
+                  PKR {grandTotal.toLocaleString()}
+                </span>
               </div>
-            )}
 
-            {checkoutStep === 'success' && (
-              <button
-                onClick={() => {
-                  setCheckoutStep('cart');
-                  onClose();
-                }}
-                className="w-full py-3 px-4 bg-[#1C432E] text-white rounded-md font-semibold text-sm hover:bg-[#25573C] transition-colors"
-              >
-                Continue Browsing
-              </button>
-            )}
-          </div>
+              {checkoutStep === 'cart' ? (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setCheckoutStep('checkout')}
+                    className="w-full py-3.5 px-4 bg-[#1C432E] hover:bg-[#25573C] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  >
+                    <span>Proceed to Delivery Checkout</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleWhatsAppCheckout}
+                    className="w-full py-2.5 px-4 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Quick Order on WhatsApp</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutStep('cart')}
+                    className="py-3 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    form="checkout-form"
+                    className="flex-1 py-3 px-4 bg-[#1C432E] hover:bg-[#25573C] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors cursor-pointer shadow-xs"
+                  >
+                    Confirm & Place Order
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

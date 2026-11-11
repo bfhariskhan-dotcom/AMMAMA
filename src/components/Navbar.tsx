@@ -178,6 +178,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     Cholistan Pure Desi Ghee
                   </button>
+                  <button
+                    onClick={() => handleCategoryClick('cooking-oil')}
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                  >
+                    Canola &amp; Mustard Cooking Oils
+                  </button>
+                  <button
+                    onClick={() => handleCategoryClick('herbal-powder')}
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                  >
+                    Pure Herbal Powders (Sache / Jar)
+                  </button>
+                  <button
+                    onClick={() => handleCategoryClick('vitality')}
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                  >
+                    Herbal Vitality &amp; Endurance
+                  </button>
                 </div>
               )}
             </div>
@@ -360,7 +378,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
                 <button
                   onClick={() => handleCategoryClick('formula')}
-                  className="w-full text-left py-1.5 text-stone-700"
+                  className="w-full text-left py-1.5 text-stone-700 font-semibold text-[#1C432E]"
                 >
                   Terra Herbs-8 (200g Flagship)
                 </button>
@@ -368,19 +386,37 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleCategoryClick('honey')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  Wild Potohar Sidr Honey
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('superfood')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Organic Moringa Leaf Powder
+                  Pure Beiry Nectar Honey of Karak
                 </button>
                 <button
                   onClick={() => handleCategoryClick('ghee')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  A2 Vedic Bilona Desi Ghee
+                  Cholistan Pure Desi Ghee
+                </button>
+                <button
+                  onClick={() => handleCategoryClick('olive-oil')}
+                  className="w-full text-left py-1.5 text-stone-700"
+                >
+                  Mudanya &amp; Mundial Olive Oils (5L)
+                </button>
+                <button
+                  onClick={() => handleCategoryClick('cooking-oil')}
+                  className="w-full text-left py-1.5 text-stone-700"
+                >
+                  Canola &amp; Mustard Cooking Oils
+                </button>
+                <button
+                  onClick={() => handleCategoryClick('herbal-powder')}
+                  className="w-full text-left py-1.5 text-stone-700"
+                >
+                  Pure Herbal Powders (Sache / Jar)
+                </button>
+                <button
+                  onClick={() => handleCategoryClick('vitality')}
+                  className="w-full text-left py-1.5 text-stone-700"
+                >
+                  Herbal Vitality &amp; Endurance
                 </button>
               </div>
             )}

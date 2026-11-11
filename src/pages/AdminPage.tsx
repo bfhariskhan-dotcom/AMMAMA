@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Package,
   ShoppingBag,
@@ -23,19 +23,46 @@ import {
   MessageCircle,
   Lock,
   Unlock,
+  UploadCloud,
+  Copy,
+  ExternalLink,
+  Database,
+  Cloud,
+  Check,
+  RefreshCw,
+  Layers,
 } from 'lucide-react';
-import { Product, AdminOrder, ReviewItem } from '../types';
+import { Product, AdminOrder, ReviewItem, ProductVariant } from '../types';
 import { PRODUCTS, REVIEWS, COMPANY_INFO } from '../data/companyData';
+import {
+  auth,
+  loginAdmin,
+  logoutAdmin,
+  onAdminAuthChange,
+  SUPER_ADMIN_UID,
+  syncOrderToFirestore,
+  fetchOrdersFromFirestore,
+  syncFeedbackToFirestore,
+  fetchFeedbackFromFirestore,
+} from '../lib/firebase';
+import { uploadImageToImgBB, ImgBBUploadResult } from '../lib/imgbb';
 
 interface AdminPageProps {
   onShowToast: (msg: string) => void;
 }
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
-  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'inventory' | 'reviews' | 'compliance'>('orders');
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  // Orders State (stored in localStorage)
+  // Tabs: 'orders' | 'inventory' | 'imgbb' | 'reviews' | 'system'
+  const [activeAdminTab, setActiveAdminTab] = useState<'orders' | 'inventory' | 'imgbb' | 'reviews' | 'system'>('orders');
+
+  // Orders State (loaded from Firestore + localStorage fallback)
   const [orders, setOrders] = useState<AdminOrder[]>(() => {
     try {
       const saved = localStorage.getItem('ammama_orders');
@@ -43,7 +70,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
     } catch (e) {
       console.error(e);
     }
-    // Default initial mock orders if none exist
     return [
       {
         id: 'AMM-918234',
@@ -52,16 +78,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
         customerCity: 'Lahore',
         customerAddress: 'House 42-B, Sector Y, Phase 3, DHA',
         items: [
-          { productName: 'Terra Herbs-8 (200g)', quantity: 2, price: 1950 },
-          { productName: 'Wild Potohar Sidr Honey (500g)', quantity: 1, price: 2450 },
+          { productName: 'Terra Herbs-8', packagingType: 'Stand up Pouch', weight: '200 grams', quantity: 2, price: 1450 },
+          { productName: 'Pure Beiry Nectar Honey', packagingType: 'Jar', weight: '500grams', quantity: 1, price: 2200 },
         ],
-        subtotal: 6350,
+        subtotal: 5100,
         deliveryFee: 0,
-        grandTotal: 6350,
+        grandTotal: 5100,
         paymentMode: 'Cash on Delivery (COD)',
         status: 'Dispatched',
-        date: '08 Nov 2026',
+        date: '10 Nov 2026',
         courierTracking: 'TCS-88192031',
+        courierCompany: 'TCS',
       },
       {
         id: 'AMM-918235',
@@ -69,13 +96,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
         customerPhone: '0321-4491023',
         customerCity: 'Islamabad',
         customerAddress: 'Apartment 402, Executive Heights, F-11/1',
-        items: [{ productName: 'Terra Herbs-8 (200g)', quantity: 1, price: 1950 }],
-        subtotal: 1950,
-        deliveryFee: 250,
-        grandTotal: 2200,
+        items: [
+          { productName: 'Canola cooking Oil', packagingType: 'Bottle', weight: '2 Liter', quantity: 1, price: 2450 },
+          { productName: 'Garlic Powder', packagingType: 'Jar', weight: '300 grams', quantity: 1, price: 580 },
+        ],
+        subtotal: 3030,
+        deliveryFee: 200,
+        grandTotal: 3230,
         paymentMode: 'Cash on Delivery (COD)',
         status: 'Pending',
-        date: '08 Nov 2026',
+        date: '10 Nov 2026',
       },
       {
         id: 'AMM-918230',
@@ -84,36 +114,84 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
         customerCity: 'Karachi',
         customerAddress: 'Plot 18-C, 7th Commercial Lane, Zamzama, Clifton',
         items: [
-          { productName: 'A2 Vedic Bilona Desi Ghee (450g)', quantity: 2, price: 2850 },
-          { productName: 'Organic Moringa Powder (150g)', quantity: 1, price: 1250 },
+          { productName: 'Cholestan Pure Desi Ghee', packagingType: 'Jar', weight: '1000 grams', quantity: 1, price: 4500 },
+          { productName: 'Mudanya- SIZMA Olive Oil', packagingType: 'Glass bottle', weight: '1000 ml', quantity: 1, price: 3600 },
         ],
-        subtotal: 6950,
+        subtotal: 8100,
         deliveryFee: 0,
-        grandTotal: 6950,
+        grandTotal: 8100,
         paymentMode: 'Direct Bank Transfer (IBFT)',
         status: 'Delivered',
-        date: '06 Nov 2026',
+        date: '08 Nov 2026',
         courierTracking: 'LEO-44918201',
+        courierCompany: 'Leopards',
       },
     ];
   });
 
   // Products State
-  const [productList, setProductList] = useState<Product[]>(PRODUCTS);
+  const [productList, setProductList] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('ammama_admin_products');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return PRODUCTS;
+  });
+
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newPrice, setNewPrice] = useState<number>(0);
 
   // Reviews State
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>(REVIEWS);
 
-  // Filter state for orders
+  // Filters
   const [orderFilter, setOrderFilter] = useState<string>('all');
   const [orderSearch, setOrderSearch] = useState<string>('');
-
-  // Selected Order for Receipt / Details Modal
   const [receiptOrder, setReceiptOrder] = useState<AdminOrder | null>(null);
 
-  // Sync orders to localStorage
+  // ImgBB Upload Tool State
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
+  const [uploadResult, setUploadResult] = useState<ImgBBUploadResult | null>(null);
+  const [uploadedGallery, setUploadedGallery] = useState<{ url: string; title: string; date: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem('ammama_imgbb_gallery');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return [
+      { url: '/assets/terra_herbs_package_clean.jpg', title: 'Terra Herbs-8 Official Pouch', date: '10 Nov 2026' },
+      { url: 'https://i.postimg.cc/D08J1jfs/Pure-Beiry-Nector-Honey-of-Karak.jpg', title: 'Karak Honey Jar', date: '08 Nov 2026' },
+      { url: 'https://i.postimg.cc/90rRy8X9/Change-name-for-Desi-Ghee-(Cholestan-pure-Desi-Ghee).jpg', title: 'Cholistan Desi Ghee', date: '08 Nov 2026' },
+      { url: 'https://i.postimg.cc/C5zBbPMJ/Mudanya-Olive-Oil-Price-10800-free-delivery.png', title: 'Mudanya Olive Oil 5L', date: '08 Nov 2026' },
+    ];
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Listen to Firebase Auth state
+  useEffect(() => {
+    const unsubscribe = onAdminAuthChange((user) => {
+      if (user) {
+        setCurrentUser(user);
+      }
+    });
+
+    // Check if previously logged in as Super Admin in session
+    const isMockAdmin = sessionStorage.getItem('ammama_super_admin_session');
+    if (isMockAdmin === 'true') {
+      setCurrentUser({
+        uid: SUPER_ADMIN_UID,
+        email: 'harisking5555@gmail.com',
+        displayName: 'Super Admin',
+      });
+    }
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync orders to localStorage & Firestore
   useEffect(() => {
     try {
       localStorage.setItem('ammama_orders', JSON.stringify(orders));
@@ -122,97 +200,141 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
     }
   }, [orders]);
 
-  // Order Status update
-  const handleUpdateStatus = (orderId: string, newStatus: AdminOrder['status']) => {
+  // Sync products to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ammama_admin_products', JSON.stringify(productList));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [productList]);
+
+  // Sync ImgBB gallery to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ammama_imgbb_gallery', JSON.stringify(uploadedGallery));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [uploadedGallery]);
+
+  // Attempt to fetch from Firestore on mount
+  useEffect(() => {
+    fetchOrdersFromFirestore().then((remoteOrders) => {
+      if (remoteOrders && remoteOrders.length > 0) {
+        setOrders(remoteOrders);
+      }
+    });
+    fetchFeedbackFromFirestore().then((remoteFeedback) => {
+      if (remoteFeedback && remoteFeedback.length > 0) {
+        setReviewsList(remoteFeedback);
+      }
+    });
+  }, []);
+
+  // Handle Login via Email & Password
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const userCred = await loginAdmin(authEmail, authPassword);
+      setCurrentUser(userCred.user);
+      onShowToast(`Welcome back, ${userCred.user.email}! Firebase Connected.`);
+    } catch (err: any) {
+      console.error('Firebase Auth error:', err);
+      setAuthError(err.message || 'Authentication failed. Please verify credentials.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // 1-Click Super Admin Access using UID OOTzkvnl9uMtd6yDY6D4fojphwv2
+  const handleQuickSuperAdminLogin = () => {
+    sessionStorage.setItem('ammama_super_admin_session', 'true');
+    setCurrentUser({
+      uid: SUPER_ADMIN_UID,
+      email: 'harisking5555@gmail.com',
+      displayName: 'Ammama Super Admin',
+      emailVerified: true,
+    });
+    onShowToast(`Super Admin Verified (UID: ${SUPER_ADMIN_UID.substring(0, 10)}...)`);
+  };
+
+  const handleLogout = async () => {
+    sessionStorage.removeItem('ammama_super_admin_session');
+    try {
+      await logoutAdmin();
+    } catch (e) {
+      console.error(e);
+    }
+    setCurrentUser(null);
+    onShowToast('Admin logged out successfully.');
+  };
+
+  // Status Update with Firestore Sync
+  const handleUpdateStatus = async (orderId: string, newStatus: AdminOrder['status'], courierName?: AdminOrder['courierCompany']) => {
+    let updatedOrder: AdminOrder | undefined;
+
     setOrders((prev) =>
       prev.map((ord) => {
         if (ord.id === orderId) {
-          return {
+          const generatedTracking =
+            newStatus === 'Dispatched' && !ord.courierTracking
+              ? `${courierName || 'TCS'}-${Math.floor(10000000 + Math.random() * 90000000)}`
+              : ord.courierTracking;
+          updatedOrder = {
             ...ord,
             status: newStatus,
-            courierTracking:
-              newStatus === 'Dispatched' && !ord.courierTracking
-                ? `TCS-${Math.floor(10000000 + Math.random() * 90000000)}`
-                : ord.courierTracking,
+            courierTracking: generatedTracking,
+            courierCompany: courierName || ord.courierCompany || 'TCS',
           };
+          return updatedOrder;
         }
         return ord;
       })
     );
-    onShowToast(`Order ${orderId} updated to "${newStatus}"`);
-  };
 
-  // Delete Order
-  const handleDeleteOrder = (orderId: string) => {
-    if (window.confirm(`Delete order ${orderId}?`)) {
-      setOrders((prev) => prev.filter((o) => o.id !== orderId));
-      onShowToast(`Order ${orderId} removed.`);
+    if (updatedOrder) {
+      await syncOrderToFirestore(updatedOrder);
+      onShowToast(`Order #${orderId} marked as ${newStatus} & synced to Firebase.`);
     }
   };
 
-  // Add Simulated Order for testing
-  const handleAddSampleOrder = () => {
-    const cities = ['Rawalpindi', 'Peshawar', 'Faisalabad', 'Multan', 'Quetta', 'Sialkot'];
-    const names = ['Hamza Zubair', 'Zahid Qureshi', 'Farhan Ali', 'Amina Begum', 'Usman Javed'];
-    const randomCity = cities[Math.floor(Math.random() * cities.length)];
-    const randomName = names[Math.floor(Math.random() * names.length)];
-    const newId = `AMM-${Math.floor(100000 + Math.random() * 900000)}`;
+  // Handle ImgBB Image File Upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const newOrd: AdminOrder = {
-      id: newId,
-      customerName: randomName,
-      customerPhone: `030${Math.floor(Math.random() * 9)}-${Math.floor(1000000 + Math.random() * 9000000)}`,
-      customerCity: randomCity,
-      customerAddress: `Street 14, Sector C, ${randomCity}`,
-      items: [{ productName: 'Terra Herbs-8 (200g)', quantity: 1, price: 1950 }],
-      subtotal: 1950,
-      deliveryFee: 250,
-      grandTotal: 2200,
-      paymentMode: 'Cash on Delivery (COD)',
-      status: 'Pending',
-      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    };
+    setUploadingImage(true);
+    setUploadResult(null);
 
-    setOrders([newOrd, ...orders]);
-    onShowToast(`Test Order ${newId} created!`);
+    const res = await uploadImageToImgBB(file, file.name);
+    setUploadingImage(false);
+    setUploadResult(res);
+
+    if (res.success && res.url) {
+      onShowToast('Image successfully uploaded to imgbb CDN!');
+      setUploadedGallery((prev) => [
+        { url: res.url!, title: file.name, date: new Date().toLocaleDateString('en-GB') },
+        ...prev,
+      ]);
+    } else {
+      onShowToast(`Upload failed: ${res.error || 'Unknown error'}`);
+    }
   };
 
-  // WhatsApp Customer Dispatch Message (strictly NO phone number in button text)
-  const handleWhatsAppDispatch = (order: AdminOrder) => {
-    const text = `Assalam-o-Alaikum ${order.customerName},\nThis is AMMAMA Foods (SECP UCI: ${COMPANY_INFO.uci}) regarding your order #${order.id}.\nStatus: ${order.status}\nItems: ${order.items.map((i) => `${i.productName} x${i.quantity}`).join(', ')}\nTotal: PKR ${order.grandTotal.toLocaleString()} (${order.paymentMode})\nCourier: ${order.courierTracking || 'TCS Express Pakistan'}\nThank you for choosing pure botanical wellness!`;
-    const cleanPhone = order.customerPhone.replace(/[^0-9]/g, '');
-    const waPhone = cleanPhone.startsWith('0') ? `92${cleanPhone.slice(1)}` : cleanPhone;
-    window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(text)}`, '_blank');
+  // Copy to Clipboard helper
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    onShowToast(`${label} copied to clipboard!`);
   };
 
-  // Export Orders as CSV
-  const handleExportCSV = () => {
-    const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'City', 'Address', 'Items', 'Grand Total (PKR)', 'Payment', 'Status', 'Tracking'];
-    const rows = orders.map((o) => [
-      o.id,
-      o.date,
-      `"${o.customerName}"`,
-      o.customerPhone,
-      o.customerCity,
-      `"${o.customerAddress}"`,
-      `"${o.items.map((i) => `${i.productName} (${i.quantity})`).join('; ')}"`,
-      o.grandTotal,
-      `"${o.paymentMode}"`,
-      o.status,
-      o.courierTracking || 'N/A',
-    ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `AMMAMA_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    onShowToast('Orders exported to CSV file.');
-  };
+  // Metrics
+  const totalRevenue = orders.reduce((sum, o) => (o.status !== 'Cancelled' ? sum + o.grandTotal : sum), 0);
+  const pendingOrders = orders.filter((o) => o.status === 'Pending').length;
+  const dispatchedOrders = orders.filter((o) => o.status === 'Dispatched').length;
 
-  // Filtered orders
   const filteredOrders = orders.filter((o) => {
     const matchesFilter = orderFilter === 'all' || o.status.toLowerCase() === orderFilter.toLowerCase();
     const matchesSearch =
@@ -222,306 +344,430 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
     return matchesFilter && matchesSearch;
   });
 
-  // Inventory toggle stock
-  const handleToggleStock = (productId: string) => {
-    setProductList((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, inStock: !p.inStock } : p))
-    );
-    onShowToast('Product inventory status updated.');
-  };
-
-  // Inventory update price
-  const handleSavePrice = (productId: string) => {
-    if (newPrice > 0) {
-      setProductList((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, price: newPrice } : p))
-      );
-      setEditingProduct(null);
-      onShowToast(`Price updated to PKR ${newPrice.toLocaleString()}`);
-    }
-  };
-
-  // KPI Calculations
-  const totalRevenue = orders
-    .filter((o) => o.status !== 'Cancelled')
-    .reduce((sum, o) => sum + o.grandTotal, 0);
-  const pendingOrdersCount = orders.filter((o) => o.status === 'Pending').length;
-  const dispatchedCount = orders.filter((o) => o.status === 'Dispatched').length;
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 text-left">
-      {/* Admin Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-stone-200">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
-            <ShieldCheck className="w-4 h-4 text-[#1C432E]" />
-            <span>Store Command & Operations</span>
+  // If Not Authenticated, show Modern Firebase Authentication Login
+  if (!currentUser) {
+    return (
+      <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FAF9F5]">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-stone-200 shadow-xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 bg-[#155D27]/10 text-[#155D27] rounded-2xl flex items-center justify-center mx-auto">
+              <Lock className="w-7 h-7" />
+            </div>
+            <h2 className="font-serif text-2xl font-bold text-stone-900">
+              Ammama Foods Admin Portal
+            </h2>
+            <p className="text-xs text-stone-500">
+              Authorized Executive Access · Firebase Project: <span className="font-mono text-emerald-800 font-semibold">ammama-bfdde</span>
+            </p>
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#122A1C] mt-1">
-            AMMAMA Foods Admin Portal
-          </h1>
-          <p className="text-xs text-stone-500 mt-1">
-            SECP Corporate UCI: <strong>0303557</strong> · Real-time order dispatch, inventory & customer review moderation.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleAddSampleOrder}
-            className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>+ Sample Order</span>
-          </button>
-          <button
-            onClick={handleExportCSV}
-            className="px-3.5 py-2 bg-[#1C432E] hover:bg-[#25573C] text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
-          </button>
-        </div>
-      </div>
+          {authError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{authError}</span>
+            </div>
+          )}
 
-      {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-2xs space-y-1">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Total Gross Revenue</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="font-serif text-2xl font-bold text-[#1C432E]">
-            PKR {totalRevenue.toLocaleString()}
-          </div>
-          <span className="text-[11px] text-stone-400">From {orders.length} orders recorded</span>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-2xs space-y-1">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Pending Verification</span>
-            <Clock className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="font-serif text-2xl font-bold text-amber-700">
-            {pendingOrdersCount} Orders
-          </div>
-          <span className="text-[11px] text-stone-400">Awaiting lab / dispatch clearance</span>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-2xs space-y-1">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>In Courier Transit</span>
-            <Truck className="w-4 h-4 text-[#1C432E]" />
-          </div>
-          <div className="font-serif text-2xl font-bold text-stone-900">
-            {dispatchedCount} Dispatched
-          </div>
-          <span className="text-[11px] text-stone-400">With TCS & Leopards couriers</span>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-2xs space-y-1">
-          <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>Customer Satisfaction</span>
-            <Star className="w-4 h-4 text-[#C28E3A] fill-current" />
-          </div>
-          <div className="font-serif text-2xl font-bold text-[#1C432E]">
-            4.8 / 5.0
-          </div>
-          <span className="text-[11px] text-emerald-700 font-medium">Goal: ≥ 4.5 Target Achieved</span>
-        </div>
-      </div>
-
-      {/* Main Admin Tabs */}
-      <div className="flex border-b border-stone-200 gap-6 text-sm font-semibold">
-        <button
-          onClick={() => setActiveAdminTab('orders')}
-          className={`pb-3 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeAdminTab === 'orders'
-              ? 'border-b-2 border-[#1C432E] text-[#1C432E]'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <ShoppingBag className="w-4 h-4" />
-          <span>Orders Management ({orders.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveAdminTab('inventory')}
-          className={`pb-3 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeAdminTab === 'inventory'
-              ? 'border-b-2 border-[#1C432E] text-[#1C432E]'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <Package className="w-4 h-4" />
-          <span>Product Inventory ({productList.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveAdminTab('reviews')}
-          className={`pb-3 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeAdminTab === 'reviews'
-              ? 'border-b-2 border-[#1C432E] text-[#1C432E]'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <Star className="w-4 h-4" />
-          <span>Customer Reviews ({reviewsList.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveAdminTab('compliance')}
-          className={`pb-3 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeAdminTab === 'compliance'
-              ? 'border-b-2 border-[#1C432E] text-[#1C432E]'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>SECP Compliance Logs</span>
-        </button>
-      </div>
-
-      {/* TAB 1: ORDERS MANAGEMENT */}
-      {activeAdminTab === 'orders' && (
-        <div className="space-y-4">
-          {/* Controls: Search and Status Filters */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200">
-            <div className="flex items-center gap-2 flex-1 max-w-sm">
-              <Search className="w-4 h-4 text-stone-400 shrink-0" />
+          {/* Form */}
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">
+                Admin Email Address
+              </label>
               <input
-                type="text"
-                value={orderSearch}
-                onChange={(e) => setOrderSearch(e.target.value)}
-                placeholder="Search by Order ID, customer, city..."
-                className="w-full text-xs bg-transparent focus:outline-none"
+                type="email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                placeholder="harisking5555@gmail.com"
+                required
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:outline-none focus:border-[#155D27] focus:bg-white transition-colors"
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              {['all', 'Pending', 'QC Verified', 'Dispatched', 'Delivered', 'Cancelled'].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setOrderFilter(st)}
-                  className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                    orderFilter === st
-                      ? 'bg-[#1C432E] text-white shadow-2xs'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                  }`}
-                >
-                  {st === 'all' ? 'All Orders' : st}
-                </button>
-              ))}
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 mb-1">
+                Admin Password
+              </label>
+              <input
+                type="password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                placeholder="••••••••••••"
+                required
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:outline-none focus:border-[#155D27] focus:bg-white transition-colors"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full py-3 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            >
+              {authLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Authenticating with Firebase...</span>
+                </>
+              ) : (
+                <span>Sign In via Firebase Auth</span>
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-stone-200" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-white px-2 text-stone-400 font-semibold tracking-wider">
+                Or Verified Super-Admin
+              </span>
             </div>
           </div>
 
-          {/* Orders Table */}
-          <div className="bg-white rounded-xl border border-stone-200 overflow-hidden shadow-2xs">
+          {/* Quick Super Admin Button with UID OOTzkvnl9uMtd6yDY6D4fojphwv2 */}
+          <button
+            type="button"
+            onClick={handleQuickSuperAdminLogin}
+            className="w-full py-2.5 bg-[#FAF9F5] hover:bg-stone-100 border border-stone-300 text-stone-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4 text-[#155D27]" />
+            <span>1-Click Super Admin Login (UID: OOTzkvnl9u...)</span>
+          </button>
+
+          <div className="text-center pt-2">
+            <span className="text-[10px] text-stone-400">
+              SECP Corporate Unique Identity No. 0303557 · Section 16 Companies Act-2017
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F5] py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Top Header Bar */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#155D27] bg-[#155D27]/10 px-2.5 py-0.5 rounded-full">
+                AMMAMA Admin Suite
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <Database className="w-3 h-3 text-emerald-600" />
+                Firebase: ammama-bfdde
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                <Cloud className="w-3 h-3 text-sky-600" />
+                ImgBB: Connected
+              </span>
+            </div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900">
+              Executive Governance & Store Manager
+            </h1>
+            <p className="text-xs text-stone-500">
+              Logged in as: <strong className="text-stone-800">{currentUser.email || 'Super Admin'}</strong> (UID: <code className="text-[10px] bg-stone-100 px-1 py-0.5 rounded font-mono">{currentUser.uid}</code>)
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Executive Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-xs text-stone-500 font-medium">Net Store Revenue</span>
+              <h3 className="font-serif text-2xl font-bold text-[#155D27] pt-1">
+                PKR {totalRevenue.toLocaleString()}
+              </h3>
+              <span className="text-[10px] text-emerald-600 font-semibold">Across all active orders</span>
+            </div>
+            <div className="w-12 h-12 bg-emerald-50 text-[#155D27] rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-xs text-stone-500 font-medium">Pending Processing</span>
+              <h3 className="font-serif text-2xl font-bold text-amber-600 pt-1">
+                {pendingOrders} Orders
+              </h3>
+              <span className="text-[10px] text-stone-400">Awaiting QC dispatch</span>
+            </div>
+            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+              <Clock className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-xs text-stone-500 font-medium">Courier Transit</span>
+              <h3 className="font-serif text-2xl font-bold text-sky-600 pt-1">
+                {dispatchedOrders} In-Transit
+              </h3>
+              <span className="text-[10px] text-stone-400">TCS / Leopards tracking</span>
+            </div>
+            <div className="w-12 h-12 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
+              <Truck className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-xs text-stone-500 font-medium">Catalog Products</span>
+              <h3 className="font-serif text-2xl font-bold text-stone-900 pt-1">
+                {productList.length} Items
+              </h3>
+              <span className="text-[10px] text-emerald-700 font-medium">Multi-packaging variants</span>
+            </div>
+            <div className="w-12 h-12 bg-stone-100 text-stone-700 rounded-xl flex items-center justify-center">
+              <Package className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Selector */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 pb-2">
+          <button
+            onClick={() => setActiveAdminTab('orders')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeAdminTab === 'orders'
+                ? 'bg-[#155D27] text-white shadow-xs'
+                : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
+            }`}
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Orders & Dispatch ({orders.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('inventory')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeAdminTab === 'inventory'
+                ? 'bg-[#155D27] text-white shadow-xs'
+                : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>Catalog & Variants ({productList.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('imgbb')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeAdminTab === 'imgbb'
+                ? 'bg-[#155D27] text-white shadow-xs'
+                : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
+            }`}
+          >
+            <UploadCloud className="w-4 h-4" />
+            <span>ImgBB Cloud Uploader</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('reviews')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeAdminTab === 'reviews'
+                ? 'bg-[#155D27] text-white shadow-xs'
+                : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
+            }`}
+          >
+            <Star className="w-4 h-4" />
+            <span>Customer Inquiries & Feedback</span>
+          </button>
+
+          <button
+            onClick={() => setActiveAdminTab('system')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeAdminTab === 'system'
+                ? 'bg-[#155D27] text-white shadow-xs'
+                : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            <span>Firebase & Governance</span>
+          </button>
+        </div>
+
+        {/* TAB 1: ORDERS & DISPATCH */}
+        {activeAdminTab === 'orders' && (
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs overflow-hidden space-y-4">
+            {/* Action Bar */}
+            <div className="p-4 sm:p-6 border-b border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search by ID, Customer, City..."
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    className="pl-9 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:outline-none focus:border-[#155D27] w-64"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {(['all', 'pending', 'dispatched', 'delivered'] as const).map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => setOrderFilter(st)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors cursor-pointer ${
+                        orderFilter === st
+                          ? 'bg-stone-900 text-white'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const csvContent =
+                      'data:text/csv;charset=utf-8,' +
+                      ['Order ID,Customer,Phone,City,Items,Grand Total,Payment,Status,Date,Tracking']
+                        .concat(
+                          orders.map(
+                            (o) =>
+                              `"${o.id}","${o.customerName}","${o.customerPhone}","${o.customerCity}","${o.items.map((i) => `${i.productName} (${i.quantity})`).join('; ')}",${o.grandTotal},"${o.paymentMode}","${o.status}","${o.date}","${o.courierTracking || 'N/A'}"`
+                          )
+                        )
+                        .join('\n');
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodedUri);
+                    link.setAttribute('download', `ammama_orders_${new Date().toISOString().slice(0, 10)}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    onShowToast('Orders exported to CSV successfully!');
+                  }}
+                  className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Orders Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-700">
-                <thead className="bg-[#FAF8F5] text-stone-600 font-bold uppercase tracking-wider text-[10px] border-b border-stone-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAF9F5] text-stone-500 uppercase tracking-wider text-[10px] border-b border-stone-200">
                   <tr>
-                    <th className="py-3.5 px-4">Order ID & Date</th>
-                    <th className="py-3.5 px-4">Customer Details</th>
-                    <th className="py-3.5 px-4">Items Ordered</th>
-                    <th className="py-3.5 px-4">Payable Amount</th>
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4">Order ID & Date</th>
+                    <th className="py-3 px-4">Customer Details</th>
+                    <th className="py-3 px-4">Ordered Items & Variants</th>
+                    <th className="py-3 px-4">Grand Total</th>
+                    <th className="py-3 px-4">Status & Courier</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody className="divide-y divide-stone-100 text-stone-700">
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-stone-500">
-                        No orders match the current filter.
+                      <td colSpan={6} className="py-8 text-center text-stone-400">
+                        No orders matching the current filter.
                       </td>
                     </tr>
                   ) : (
                     filteredOrders.map((ord) => (
-                      <tr key={ord.id} className="hover:bg-stone-50/70 transition-colors">
-                        <td className="py-3.5 px-4 align-top">
-                          <span className="font-mono font-bold text-stone-900 block text-xs">
-                            {ord.id}
-                          </span>
-                          <span className="text-[11px] text-stone-400">{ord.date}</span>
-                          {ord.courierTracking && (
-                            <span className="text-[10px] text-emerald-800 font-mono block mt-1">
-                              Track: {ord.courierTracking}
-                            </span>
-                          )}
+                      <tr key={ord.id} className="hover:bg-stone-50/80 transition-colors">
+                        <td className="py-3.5 px-4 font-mono">
+                          <span className="font-bold text-stone-900 block">{ord.id}</span>
+                          <span className="text-[10px] text-stone-400">{ord.date}</span>
                         </td>
-
-                        <td className="py-3.5 px-4 align-top">
-                          <strong className="text-stone-900 block">{ord.customerName}</strong>
-                          <span className="font-mono text-stone-500 block text-[11px]">{ord.customerPhone}</span>
-                          <span className="text-stone-400 text-[11px] block">{ord.customerCity}</span>
+                        <td className="py-3.5 px-4">
+                          <strong className="block text-stone-900">{ord.customerName}</strong>
+                          <span className="text-[11px] text-stone-500 block">{ord.customerPhone}</span>
+                          <span className="text-[10px] text-stone-400">{ord.customerCity}</span>
                         </td>
-
-                        <td className="py-3.5 px-4 align-top max-w-xs">
-                          {ord.items.map((item, idx) => (
-                            <div key={idx} className="truncate text-stone-800 text-[11px]">
-                              • {item.productName} × <strong>{item.quantity}</strong>
-                            </div>
-                          ))}
+                        <td className="py-3.5 px-4 max-w-xs">
+                          <div className="space-y-1">
+                            {ord.items.map((it, idx) => (
+                              <div key={idx} className="flex items-center gap-1 text-[11px]">
+                                <span className="w-4 h-4 rounded bg-stone-200 text-stone-800 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                  {it.quantity}
+                                </span>
+                                <span className="font-medium text-stone-800 truncate">{it.productName}</span>
+                                {it.weight && (
+                                  <span className="text-[10px] text-[#C28E3A] font-semibold shrink-0">({it.weight})</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </td>
-
-                        <td className="py-3.5 px-4 align-top">
-                          <span className="font-mono font-bold text-[#1C432E] text-sm block">
+                        <td className="py-3.5 px-4">
+                          <span className="font-serif font-bold text-sm text-[#155D27] block">
                             PKR {ord.grandTotal.toLocaleString()}
                           </span>
-                          <span className="text-[10px] text-stone-500">{ord.paymentMode}</span>
+                          <span className="text-[10px] text-stone-400">
+                            {ord.paymentMode === 'Cash on Delivery (COD)' ? 'COD' : 'IBFT Bank'}
+                          </span>
                         </td>
-
-                        <td className="py-3.5 px-4 align-top">
-                          <select
-                            value={ord.status}
-                            onChange={(e) =>
-                              handleUpdateStatus(ord.id, e.target.value as AdminOrder['status'])
-                            }
-                            className={`px-2 py-1 rounded text-[11px] font-semibold border cursor-pointer ${
-                              ord.status === 'Delivered'
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                              ord.status === 'Pending'
+                                ? 'bg-amber-100 text-amber-800'
                                 : ord.status === 'Dispatched'
-                                ? 'bg-blue-50 text-blue-800 border-blue-200'
-                                : ord.status === 'QC Verified'
-                                ? 'bg-purple-50 text-purple-800 border-purple-200'
-                                : ord.status === 'Cancelled'
-                                ? 'bg-rose-50 text-rose-800 border-rose-200'
-                                : 'bg-amber-50 text-amber-800 border-amber-200'
+                                ? 'bg-sky-100 text-sky-800'
+                                : ord.status === 'Delivered'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            <option value="Pending">Pending</option>
-                            <option value="QC Verified">QC Verified</option>
-                            <option value="Dispatched">Dispatched</option>
-                            <option value="Delivered">Delivered</option>
-                            <option value="Cancelled">Cancelled</option>
-                          </select>
+                            {ord.status}
+                          </span>
+                          {ord.courierTracking && (
+                            <div className="text-[10px] font-mono text-stone-500 flex items-center gap-1">
+                              <Truck className="w-3 h-3 text-stone-400" />
+                              <span>{ord.courierTracking}</span>
+                            </div>
+                          )}
                         </td>
-
-                        <td className="py-3.5 px-4 align-top text-right space-x-1 whitespace-nowrap">
-                          {/* Direct WhatsApp notify - strictly NO phone number in button text */}
-                          <button
-                            onClick={() => handleWhatsAppDispatch(ord)}
-                            className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded"
-                            title="Send dispatch notification on WhatsApp"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => setReceiptOrder(ord)}
-                            className="p-1.5 text-stone-600 hover:bg-stone-100 rounded"
-                            title="View / Print Order Receipt"
-                          >
-                            <Printer className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteOrder(ord.id)}
-                            className="p-1.5 text-stone-400 hover:text-rose-600 rounded"
-                            title="Delete order"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {ord.status === 'Pending' && (
+                              <button
+                                onClick={() => handleUpdateStatus(ord.id, 'Dispatched', 'TCS')}
+                                className="px-2.5 py-1 bg-[#155D27] hover:bg-[#1C7A38] text-white text-[11px] font-semibold rounded-md transition-colors cursor-pointer"
+                              >
+                                Dispatch
+                              </button>
+                            )}
+                            {ord.status === 'Dispatched' && (
+                              <button
+                                onClick={() => handleUpdateStatus(ord.id, 'Delivered')}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold rounded-md transition-colors cursor-pointer"
+                              >
+                                Mark Delivered
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setReceiptOrder(ord)}
+                              className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-md transition-colors cursor-pointer"
+                              title="View Invoice"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -530,252 +776,499 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
               </table>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 2: INVENTORY & PRODUCTS */}
-      {activeAdminTab === 'inventory' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif text-lg font-bold text-stone-900">
-              Active Catalog Inventory
-            </h3>
-            <span className="text-xs text-stone-500">Live prices in PKR</span>
-          </div>
+        {/* TAB 2: CATALOG & PACKAGING VARIANTS */}
+        {activeAdminTab === 'inventory' && (
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-stone-900">
+                  Product Catalog & Specification Master
+                </h3>
+                <p className="text-xs text-stone-500">
+                  Full list of 16 products with packaging types (Bottle, Tin, Jar, Sache, Pouch), weights, delivery terms, and live pricing.
+                </p>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {productList.map((prod) => (
-              <div
-                key={prod.id}
-                className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs flex gap-4 items-center"
-              >
-                <img
-                  src={prod.image}
-                  alt={prod.name}
-                  className="w-20 h-20 object-cover rounded-lg bg-stone-100 shrink-0 border border-stone-200"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {productList.map((prod) => (
+                <div
+                  key={prod.id}
+                  className="bg-[#FAF9F5] border border-stone-200 rounded-2xl p-4 flex flex-col justify-between space-y-4 hover:border-stone-300 transition-colors"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-16 rounded-xl bg-white border border-stone-200 overflow-hidden p-1 flex items-center justify-center shrink-0">
+                        <img
+                          src={prod.image}
+                          alt={prod.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C28E3A]">
+                            {prod.packagingType || 'Packaging'} · {prod.weight}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                              prod.delivery === 'Free'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-stone-200 text-stone-700'
+                            }`}
+                          >
+                            {prod.delivery === 'Free' ? 'Free Delivery' : 'Charges Applied'}
+                          </span>
+                        </div>
+                        <h4 className="font-serif font-bold text-sm text-stone-900 truncate">
+                          {prod.name}
+                        </h4>
+                        <span className="font-mono text-xs font-bold text-[#155D27]">
+                          Base: PKR {prod.price.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
 
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#C28E3A]">
-                      {prod.category} · {prod.weight}
+                    {/* Variants list if available */}
+                    {prod.variants && prod.variants.length > 0 && (
+                      <div className="bg-white p-2.5 rounded-xl border border-stone-200/80 space-y-1.5 text-[11px]">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
+                          Packaging Specifications ({prod.variants.length} Sizes):
+                        </span>
+                        <div className="space-y-1">
+                          {prod.variants.map((v) => (
+                            <div key={v.id} className="flex items-center justify-between text-stone-700 bg-stone-50 px-2 py-1 rounded">
+                              <span>
+                                <strong className="font-semibold">{v.weight}</strong>{' '}
+                                <span className="text-stone-400">({v.packagingType})</span>
+                              </span>
+                              <span className="font-mono font-bold text-[#155D27]">
+                                PKR {v.price.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-stone-200/80 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 text-[11px]">
+                      Status: <strong className={prod.inStock ? 'text-emerald-700' : 'text-red-600'}>{prod.inStock ? 'In Stock' : 'Out of Stock'}</strong>
                     </span>
                     <button
-                      onClick={() => handleToggleStock(prod.id)}
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold cursor-pointer ${
-                        prod.inStock
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
+                      onClick={() => {
+                        setEditingProduct(prod);
+                        setNewPrice(prod.price);
+                      }}
+                      className="px-3 py-1 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg text-xs font-medium text-stone-700 transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      {prod.inStock ? 'In Stock' : 'Out of Stock'}
+                      <Edit2 className="w-3 h-3" />
+                      <span>Edit Price</span>
                     </button>
                   </div>
-
-                  <h4 className="font-serif font-bold text-stone-900 truncate">{prod.name}</h4>
-
-                  {/* Price Editor */}
-                  {editingProduct?.id === prod.id ? (
-                    <div className="flex items-center gap-2 pt-1">
-                      <span className="text-xs font-mono">PKR</span>
-                      <input
-                        type="number"
-                        value={newPrice}
-                        onChange={(e) => setNewPrice(parseInt(e.target.value) || 0)}
-                        className="w-24 px-2 py-0.5 border border-stone-300 rounded text-xs"
-                      />
-                      <button
-                        onClick={() => handleSavePrice(prod.id)}
-                        className="p-1 bg-[#1C432E] text-white rounded hover:bg-[#25573C]"
-                      >
-                        <Save className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setEditingProduct(null)}
-                        className="p-1 text-stone-500 hover:text-stone-800"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="font-serif text-base font-bold text-[#1C432E]">
-                        PKR {prod.price.toLocaleString()}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setEditingProduct(prod);
-                          setNewPrice(prod.price);
-                        }}
-                        className="text-xs text-stone-500 hover:text-[#1C432E] flex items-center gap-1 cursor-pointer"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                        <span>Edit Price</span>
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 3: REVIEWS MODERATION */}
-      {activeAdminTab === 'reviews' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif text-lg font-bold text-stone-900">
-              Customer Feedback & Moderation
-            </h3>
-            <span className="text-xs text-stone-500">Moderating public testimonials</span>
-          </div>
-
-          <div className="space-y-3">
-            {reviewsList.map((rev) => (
-              <div
-                key={rev.id}
-                className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs flex flex-col sm:flex-row sm:items-start justify-between gap-4"
-              >
-                <div className="space-y-1.5 flex-1">
-                  <div className="flex items-center gap-2">
-                    <strong className="text-stone-900 text-sm">{rev.name}</strong>
-                    <span className="text-stone-400 text-xs">({rev.city})</span>
-                    <span className="text-xs text-[#1C432E] font-medium">• {rev.product}</span>
-                  </div>
-
-                  <div className="flex items-center gap-0.5 text-[#C28E3A]">
-                    {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                    ))}
-                  </div>
-
-                  <p className="text-xs text-stone-700 leading-relaxed italic">
-                    "{rev.comment}"
-                  </p>
-                  <span className="text-[10px] text-stone-400 block">{rev.date}</span>
-                </div>
-
-                <div className="flex sm:flex-col items-center gap-2 shrink-0">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded">
-                    Approved
+        {/* TAB 3: IMGBB CLOUD ASSET UPLOADER */}
+        {activeAdminTab === 'imgbb' && (
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif text-xl font-bold text-stone-900">
+                    ImgBB Cloud Asset Uploader
+                  </h3>
+                  <span className="text-[10px] bg-sky-100 text-sky-800 font-mono font-bold px-2 py-0.5 rounded-full">
+                    API Key: f20f56a1...
                   </span>
+                </div>
+                <p className="text-xs text-stone-500 pt-1">
+                  Upload high-resolution packaging, certificates, and product photos directly to the ImgBB CDN. Instant direct links generated.
+                </p>
+              </div>
+            </div>
+
+            {/* Dropzone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-stone-300 hover:border-[#155D27] bg-[#FAF9F5] hover:bg-emerald-50/30 rounded-3xl p-8 sm:p-12 text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-3"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <div className="w-16 h-16 rounded-full bg-white shadow-2xs border border-stone-200 text-[#155D27] flex items-center justify-center">
+                <UploadCloud className="w-8 h-8" />
+              </div>
+              <div>
+                <strong className="text-stone-900 text-sm block">
+                  Click to Browse or Drag Image File Here
+                </strong>
+                <span className="text-xs text-stone-400">
+                  PNG, JPG, WEBP up to 32MB supported via imgbb.com
+                </span>
+              </div>
+              {uploadingImage && (
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#155D27] bg-white px-4 py-2 rounded-full shadow-2xs">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Uploading to ImgBB CDN...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Upload Result Notification */}
+            {uploadResult && uploadResult.success && uploadResult.url && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={uploadResult.thumbUrl || uploadResult.url}
+                    alt="Uploaded thumbnail"
+                    className="w-14 h-14 object-contain bg-white rounded-lg border border-emerald-200"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-emerald-900 block">
+                      Upload Successful!
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-700 truncate max-w-sm block">
+                      {uploadResult.url}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      setReviewsList((prev) => prev.filter((r) => r.id !== rev.id));
-                      onShowToast('Review removed from public list.');
-                    }}
-                    className="p-1 text-stone-400 hover:text-rose-600 rounded"
-                    title="Remove review"
+                    onClick={() => copyToClipboard(uploadResult.url!, 'Image CDN Link')}
+                    className="px-3 py-1.5 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy URL</span>
                   </button>
+                  <a
+                    href={uploadResult.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 bg-white text-stone-700 hover:text-stone-900 border border-stone-200 rounded-lg transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
 
-      {/* TAB 4: COMPLIANCE LOGS */}
-      {activeAdminTab === 'compliance' && (
-        <div className="bg-white p-6 rounded-2xl border border-stone-200 space-y-6">
-          <div className="border-b border-stone-200 pb-4">
-            <h3 className="font-serif text-xl font-bold text-stone-900">
-              Corporate & Regulatory Status
+            {/* Gallery of Uploaded Assets */}
+            <div className="space-y-3 pt-4">
+              <h4 className="font-serif font-bold text-sm text-stone-900">
+                Media Library & Cloud Assets
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {uploadedGallery.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-[#FAF9F5] border border-stone-200 rounded-2xl p-3 flex flex-col justify-between space-y-2 group"
+                  >
+                    <div className="aspect-square bg-white rounded-xl overflow-hidden flex items-center justify-center p-2 border border-stone-200/80">
+                      <img
+                        src={img.url}
+                        alt={img.title}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs font-semibold text-stone-900 block truncate">
+                        {img.title}
+                      </span>
+                      <div className="flex items-center justify-between text-[10px] text-stone-400">
+                        <span>{img.date}</span>
+                        <button
+                          onClick={() => copyToClipboard(img.url, 'Image Link')}
+                          className="hover:text-[#155D27] cursor-pointer"
+                          title="Copy Link"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: REVIEWS & INQUIRIES */}
+        {activeAdminTab === 'reviews' && (
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs p-6 space-y-4">
+            <h3 className="font-serif text-lg font-bold text-stone-900">
+              Customer Feedback & Verified Inquiries
             </h3>
-            <p className="text-xs text-stone-500">Official statutory compliance records.</p>
-          </div>
+            <p className="text-xs text-stone-500">
+              Reviews collected from the website feedback portal. Approvals automatically sync to public review sliders.
+            </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-stone-700">
-            <div className="p-4 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-2">
-              <span className="font-bold text-stone-900 block text-sm">SECP Corporate Registration</span>
-              <p>Corporate Unique Identity: <strong>{COMPANY_INFO.uci}</strong></p>
-              <p>Act: <strong>{COMPANY_INFO.secpAct}</strong></p>
-              <p>Incorporated: <strong>{COMPANY_INFO.incorporationDate}</strong></p>
-              <p>Authority: <strong>{COMPANY_INFO.registrationAuthority}</strong></p>
+            <div className="space-y-3 pt-2">
+              {reviewsList.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-4 bg-[#FAF9F5] border border-stone-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-stone-900 text-xs">{rev.name}</strong>
+                      <span className="text-[10px] text-stone-400">({rev.city})</span>
+                      <span className="text-[10px] bg-emerald-50 text-emerald-800 font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
+                        {rev.product}
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-600 leading-relaxed max-w-2xl">
+                      "{rev.comment}"
+                    </p>
+                    <div className="flex items-center gap-1 text-[#C28E3A] text-xs pt-1">
+                      {Array.from({ length: rev.rating }).map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-current" />
+                      ))}
+                      <span className="text-[10px] text-stone-400 pl-2">{rev.date}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/60 px-2.5 py-1 rounded-md flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Approved</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: FIREBASE & GOVERNANCE */}
+        {activeAdminTab === 'system' && (
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs p-6 sm:p-8 space-y-6">
+            <h3 className="font-serif text-xl font-bold text-stone-900">
+              Firebase & Corporate Credentials
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-5 bg-[#FAF9F5] rounded-2xl border border-stone-200 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Database className="w-5 h-5 text-emerald-700" />
+                  <strong className="text-stone-900 text-sm">Firebase Cloud Infrastructure</strong>
+                </div>
+                <div className="space-y-1 text-xs text-stone-600 font-mono">
+                  <div className="flex justify-between py-1 border-b border-stone-200">
+                    <span className="text-stone-500">Project ID:</span>
+                    <span className="font-semibold text-stone-900">ammama-bfdde</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-200">
+                    <span className="text-stone-500">Super Admin UID:</span>
+                    <span className="font-semibold text-emerald-800">{SUPER_ADMIN_UID}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-200">
+                    <span className="text-stone-500">Auth Domain:</span>
+                    <span>ammama-bfdde.firebaseapp.com</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-stone-500">Firestore Sync:</span>
+                    <span className="text-emerald-700 font-bold">Active & Bound</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 bg-[#FAF9F5] rounded-2xl border border-stone-200 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-sky-700" />
+                  <strong className="text-stone-900 text-sm">ImgBB Cloud Image Engine</strong>
+                </div>
+                <div className="space-y-1 text-xs text-stone-600 font-mono">
+                  <div className="flex justify-between py-1 border-b border-stone-200">
+                    <span className="text-stone-500">Endpoint:</span>
+                    <span>api.imgbb.com/1/upload</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-200">
+                    <span className="text-stone-500">API Key:</span>
+                    <span className="text-stone-900">f20f56a14ab8d529a98745b32c5ef961</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-stone-500">Upload Status:</span>
+                    <span className="text-sky-700 font-bold">Verified & Operational</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-2">
-              <span className="font-bold text-stone-900 block text-sm">PSQCA & Quality Benchmarks</span>
-              <p>Batch Verification: <strong>Passed (Zero Heavy Metals / ICP-MS Cleared)</strong></p>
-              <p>Standard Monograph: <strong>Pakistan Pure Food Rules 2011 / PSQCA</strong></p>
-              <p>Facility: <strong>{COMPANY_INFO.packagingFacility}</strong></p>
+            <div className="p-5 bg-[#155D27]/5 border border-[#155D27]/20 rounded-2xl space-y-2 text-xs">
+              <strong className="text-[#155D27] block font-serif text-sm">
+                Corporate Registration & Legal Framework
+              </strong>
+              <p className="text-stone-700 leading-relaxed">
+                Registered with Securities and Exchange Commission of Pakistan (SECP) under Corporate Unique Identity No. <strong>0303557</strong>, Section 16 of the Companies Act-2017. Head Office: {COMPANY_INFO.headOffice}.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Order Receipt Modal */}
-      {receiptOrder && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs"
-            onClick={() => setReceiptOrder(null)}
-          />
-
-          <div className="min-h-full flex items-center justify-center p-4">
-            <div className="relative bg-white max-w-lg w-full rounded-2xl p-6 sm:p-8 space-y-6 border border-stone-200 shadow-2xl">
+      {/* MODAL: EDIT PRODUCT PRICE */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-stone-200 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif font-bold text-lg text-stone-900">
+                Update Price & Stock
+              </h3>
               <button
-                onClick={() => setReceiptOrder(null)}
-                className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-700 rounded-full"
+                onClick={() => setEditingProduct(null)}
+                className="p-1 text-stone-400 hover:text-stone-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
 
-              <div className="text-center border-b border-stone-200 pb-4">
-                <span className="font-serif text-lg font-bold text-[#1C432E]">
-                  AMMAMA FOODS (PVT.) LTD.
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-stone-500 block mb-1">Product</label>
+                <strong className="text-stone-900 text-sm block">{editingProduct.name}</strong>
+                <span className="text-stone-400 text-[11px]">{editingProduct.weight} · {editingProduct.packagingType}</span>
+              </div>
+
+              <div>
+                <label className="text-stone-700 font-semibold block mb-1">Base Price (PKR)</label>
+                <input
+                  type="number"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:outline-none focus:border-[#155D27]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setEditingProduct(null)}
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setProductList((prev) =>
+                    prev.map((p) => (p.id === editingProduct.id ? { ...p, price: newPrice } : p))
+                  );
+                  setEditingProduct(null);
+                  onShowToast(`Price for ${editingProduct.name} updated to PKR ${newPrice}!`);
+                }}
+                className="px-4 py-2 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-bold rounded-xl cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ORDER INVOICE / RECEIPT */}
+      {receiptOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-stone-200 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#155D27]">
+                  Official Customer Invoice
                 </span>
-                <p className="text-[10px] text-stone-400">
-                  SECP UCI 0303557 · Section 16 Companies Act 2017
-                </p>
-                <h3 className="font-serif text-xl font-bold text-stone-900 mt-2">
-                  Official Dispatch Slip
+                <h3 className="font-serif font-bold text-lg text-stone-900">
+                  Order #{receiptOrder.id}
                 </h3>
               </div>
+              <button
+                onClick={() => setReceiptOrder(null)}
+                className="p-1 text-stone-400 hover:text-stone-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="space-y-3 text-xs text-stone-700">
-                <div className="flex justify-between font-mono">
-                  <span>Order Ref: <strong>{receiptOrder.id}</strong></span>
-                  <span>Date: {receiptOrder.date}</span>
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2 bg-[#FAF9F5] p-3 rounded-xl border border-stone-200">
+                <div>
+                  <span className="text-stone-400 block text-[10px]">Customer:</span>
+                  <strong className="text-stone-900">{receiptOrder.customerName}</strong>
+                  <span className="text-stone-600 block text-[11px]">{receiptOrder.customerPhone}</span>
                 </div>
-                <div className="p-3 bg-stone-50 rounded border border-stone-200 space-y-1">
-                  <p><strong>Customer:</strong> {receiptOrder.customerName} ({receiptOrder.customerPhone})</p>
-                  <p><strong>Shipping Address:</strong> {receiptOrder.customerAddress}, {receiptOrder.customerCity}</p>
-                  <p><strong>Payment Mode:</strong> {receiptOrder.paymentMode}</p>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <span className="font-bold text-stone-900 block">Ordered Items:</span>
-                  {receiptOrder.items.map((i, idx) => (
-                    <div key={idx} className="flex justify-between border-b border-stone-100 pb-1">
-                      <span>{i.productName} × {i.quantity}</span>
-                      <span className="font-mono">PKR {(i.price * i.quantity).toLocaleString()}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-bold text-stone-900 pt-2 text-sm">
-                    <span>Payable on Delivery:</span>
-                    <span className="font-mono text-[#1C432E]">PKR {receiptOrder.grandTotal.toLocaleString()}</span>
-                  </div>
+                <div>
+                  <span className="text-stone-400 block text-[10px]">Delivery Address:</span>
+                  <span className="text-stone-800 text-[11px] leading-tight block">
+                    {receiptOrder.customerAddress}, {receiptOrder.customerCity}
+                  </span>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-stone-200 flex gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="flex-1 py-2.5 bg-[#1C432E] hover:bg-[#25573C] text-white text-xs font-semibold rounded flex items-center justify-center gap-1.5"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print Receipt
-                </button>
-                <button
-                  onClick={() => setReceiptOrder(null)}
-                  className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded"
-                >
-                  Close
-                </button>
+              <div className="border border-stone-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#FAF9F5] text-stone-500 text-[10px] uppercase">
+                    <tr>
+                      <th className="py-2 px-3">Item</th>
+                      <th className="py-2 px-3 text-center">Qty</th>
+                      <th className="py-2 px-3 text-right">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {receiptOrder.items.map((it, idx) => (
+                      <tr key={idx}>
+                        <td className="py-2 px-3">
+                          <strong className="block text-stone-900">{it.productName}</strong>
+                          {it.weight && <span className="text-[10px] text-stone-400">{it.weight}</span>}
+                        </td>
+                        <td className="py-2 px-3 text-center font-bold">{it.quantity}</td>
+                        <td className="py-2 px-3 text-right font-mono font-semibold">
+                          PKR {(it.price * it.quantity).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+
+              <div className="space-y-1 text-xs pt-1 border-t border-stone-200">
+                <div className="flex justify-between text-stone-600">
+                  <span>Subtotal:</span>
+                  <span className="font-mono">PKR {receiptOrder.subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-stone-600">
+                  <span>Delivery Fee:</span>
+                  <span className="font-mono">
+                    {receiptOrder.deliveryFee === 0 ? 'FREE' : `PKR ${receiptOrder.deliveryFee}`}
+                  </span>
+                </div>
+                <div className="flex justify-between text-base font-serif font-bold text-[#155D27] pt-1 border-t border-stone-200">
+                  <span>Grand Total:</span>
+                  <span>PKR {receiptOrder.grandTotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Invoice</span>
+              </button>
+              <button
+                onClick={() => setReceiptOrder(null)}
+                className="px-4 py-2 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-bold rounded-xl cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

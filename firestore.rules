@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Check if user is authenticated admin with UID OOTzkvnl9uMtd6yDY6D4fojphwv2
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.uid == "OOTzkvnl9uMtd6yDY6D4fojphwv2" ||
+        request.auth.token.email == "info@ammamafoods.com"
+      );
+    }
+
+    // Orders Collection:
+    // Anyone (customers) can create an order with COD/Bank details.
+    // Only Admin can read all orders, update courier tracking/status, or delete.
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Feedback & Customer Reviews Collection:
+    // Anyone can read reviews and submit new feedback.
+    // Only Admin can update approval status or delete inappropriate reviews.
+    match /feedback/{feedbackId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // Products & Inventory Collection:
+    // Anyone can read product specifications, prices, and stock.
+    // Only Admin can create, edit prices, or modify products.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Default catch-all rule: Deny everything else unless admin
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

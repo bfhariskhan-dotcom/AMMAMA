@@ -4,6 +4,9 @@ interface AmmamaLogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
+  hideTextOnMobile?: boolean;
+  showSubtitle?: boolean;
+  twoLineTitle?: boolean;
   inverted?: boolean;
 }
 
@@ -11,14 +14,17 @@ export const AmmamaLogo: React.FC<AmmamaLogoProps> = ({
   className = '',
   size = 'md',
   showText = true,
+  hideTextOnMobile = false,
+  showSubtitle = true,
+  twoLineTitle = false,
   inverted = false,
 }) => {
   // Sizing configurations
   const dimensions = {
-    sm: { height: 42, iconSize: 42, textTitle: 'text-sm', textSub: 'text-[9px]' },
-    md: { height: 52, iconSize: 52, textTitle: 'text-base sm:text-lg', textSub: 'text-[10px]' },
-    lg: { height: 64, iconSize: 64, textTitle: 'text-xl sm:text-2xl', textSub: 'text-xs' },
-    xl: { height: 80, iconSize: 80, textTitle: 'text-2xl sm:text-3xl', textSub: 'text-sm' },
+    sm: { height: 40, iconSize: 40, textTitle: 'text-sm', textSub: 'text-[9px]' },
+    md: { height: 48, iconSize: 48, textTitle: 'text-base sm:text-lg', textSub: 'text-[10px]' },
+    lg: { height: 58, iconSize: 58, textTitle: 'text-xl sm:text-2xl', textSub: 'text-xs' },
+    xl: { height: 72, iconSize: 72, textTitle: 'text-2xl sm:text-3xl', textSub: 'text-sm' },
   }[size];
 
   const primaryColor = inverted ? '#E8F5E9' : '#155D27';
@@ -28,7 +34,7 @@ export const AmmamaLogo: React.FC<AmmamaLogoProps> = ({
   const mutedTextColor = inverted ? '#A5D6A7' : '#155D27';
 
   return (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+    <div className={`inline-flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
       {/* 
         Authentic Packaging Emblem from Product Picture:
         Botanical Mortar & Pestle, Sprouting Herbal Leaves, Laurel Wreath, 
@@ -80,55 +86,20 @@ export const AmmamaLogo: React.FC<AmmamaLogoProps> = ({
         <path d="M 110 36 C 112 27 103 23 99 28 C 96 32 102 37 110 36 Z" fill={primaryColor} />
 
         {/* --- Botanical Leaves Inside Mortar --- */}
-        {/* Left Sprout */}
-        <path
-          d="M 77 62 C 67 48 76 35 83 44 C 84 53 79 59 77 62 Z"
-          fill={accentColor}
-        />
-        {/* Center Main Leaf */}
-        <path
-          d="M 80 58 C 76 40 89 30 92 42 C 92 50 84 56 80 58 Z"
-          fill={primaryColor}
-        />
-        {/* Right Sprout */}
-        <path
-          d="M 84 62 C 94 48 87 36 96 46 C 94 54 87 60 84 62 Z"
-          fill={primaryColor}
-        />
+        <path d="M 77 62 C 67 48 76 35 83 44 C 84 53 79 59 77 62 Z" fill={accentColor} />
+        <path d="M 80 58 C 76 40 89 30 92 42 C 92 50 84 56 80 58 Z" fill={primaryColor} />
+        <path d="M 84 62 C 94 48 87 36 96 46 C 94 54 87 60 84 62 Z" fill={primaryColor} />
 
         {/* --- Pestle (Grinding Rod) --- */}
-        <path
-          d="M 64 42 C 62 39 65 35 68 37 L 89 57 C 91 59 89 63 85 61 L 64 42 Z"
-          fill={secondaryColor}
-        />
+        <path d="M 64 42 C 62 39 65 35 68 37 L 89 57 C 91 59 89 63 85 61 L 64 42 Z" fill={secondaryColor} />
 
         {/* --- Mortar (Apothecary Bowl) --- */}
-        {/* Rim of the Mortar */}
-        <path
-          d="M 58 62 C 58 59 102 59 102 62 L 99 66 L 61 66 Z"
-          fill={secondaryColor}
-        />
-        {/* Main Body of the Mortar */}
-        <path
-          d="M 61 66 C 61 88 99 88 99 66 Z"
-          fill={primaryColor}
-        />
-        {/* Decorative Mortar Band */}
-        <path
-          d="M 65 73 Q 80 77 95 73"
-          stroke={accentColor}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          fill="none"
-        />
-        {/* Mortar Pedestal / Base */}
-        <path
-          d="M 72 86 L 88 86 L 91 91 L 69 91 Z"
-          fill={secondaryColor}
-        />
+        <path d="M 58 62 C 58 59 102 59 102 62 L 99 66 L 61 66 Z" fill={secondaryColor} />
+        <path d="M 61 66 C 61 88 99 88 99 66 Z" fill={primaryColor} />
+        <path d="M 65 73 Q 80 77 95 73" stroke={accentColor} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <path d="M 72 86 L 88 86 L 91 91 L 69 91 Z" fill={secondaryColor} />
 
-        {/* --- Text Inside Emblem Badge (From Packaging) --- */}
-        {/* AMMAMA FOODS */}
+        {/* --- Text Inside Emblem Badge --- */}
         <text
           x="80"
           y="120"
@@ -142,7 +113,6 @@ export const AmmamaLogo: React.FC<AmmamaLogoProps> = ({
           AMMAMA FOODS
         </text>
 
-        {/* — PURE & NATURAL — */}
         <text
           x="80"
           y="134"
@@ -159,21 +129,32 @@ export const AmmamaLogo: React.FC<AmmamaLogoProps> = ({
 
       {/* Brand Identity Typography */}
       {showText && (
-        <div className="flex flex-col text-left">
+        <div className={`flex flex-col text-left ${hideTextOnMobile ? 'hidden sm:flex' : 'flex'}`}>
           <div className="flex items-center gap-1.5">
-            <span
-              className={`font-serif font-bold tracking-tight text-stone-900 ${dimensions.textTitle}`}
-              style={{ color: textColor }}
-            >
-              Ammama Wellness Shelf
-            </span>
+            {twoLineTitle ? (
+              <span
+                className={`font-serif font-bold tracking-tight text-stone-900 leading-tight ${dimensions.textTitle}`}
+                style={{ color: textColor }}
+              >
+                Ammama<br />Wellness Shelf
+              </span>
+            ) : (
+              <span
+                className={`font-serif font-bold tracking-tight text-stone-900 ${dimensions.textTitle}`}
+                style={{ color: textColor }}
+              >
+                Ammama Wellness Shelf
+              </span>
+            )}
           </div>
-          <span
-            className={`font-sans tracking-widest uppercase font-semibold text-stone-500 ${dimensions.textSub}`}
-            style={{ color: mutedTextColor }}
-          >
-            Pure &amp; Natural Herbal Wellness
-          </span>
+          {showSubtitle && (
+            <span
+              className={`font-sans tracking-widest uppercase font-semibold text-stone-500 ${dimensions.textSub}`}
+              style={{ color: mutedTextColor }}
+            >
+              Pure &amp; Natural Herbal Wellness
+            </span>
+          )}
         </div>
       )}
     </div>

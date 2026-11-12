@@ -178,16 +178,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
       }
     });
 
-    // Check if previously logged in as Super Admin in session
-    const isMockAdmin = sessionStorage.getItem('ammama_super_admin_session');
-    if (isMockAdmin === 'true') {
-      setCurrentUser({
-        uid: SUPER_ADMIN_UID,
-        email: 'harisking5555@gmail.com',
-        displayName: 'Super Admin',
-      });
-    }
-
     return () => unsubscribe();
   }, []);
 
@@ -243,26 +233,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
       onShowToast(`Welcome back, ${userCred.user.email}! Firebase Connected.`);
     } catch (err: any) {
       console.error('Firebase Auth error:', err);
-      setAuthError(err.message || 'Authentication failed. Please verify credentials.');
+      setAuthError(err.message || 'Authentication failed. Please verify credentials in Firebase.');
     } finally {
       setAuthLoading(false);
     }
   };
 
-  // 1-Click Super Admin Access using UID OOTzkvnl9uMtd6yDY6D4fojphwv2
-  const handleQuickSuperAdminLogin = () => {
-    sessionStorage.setItem('ammama_super_admin_session', 'true');
-    setCurrentUser({
-      uid: SUPER_ADMIN_UID,
-      email: 'harisking5555@gmail.com',
-      displayName: 'Ammama Super Admin',
-      emailVerified: true,
-    });
-    onShowToast(`Super Admin Verified (UID: ${SUPER_ADMIN_UID.substring(0, 10)}...)`);
-  };
-
   const handleLogout = async () => {
-    sessionStorage.removeItem('ammama_super_admin_session');
     try {
       await logoutAdmin();
     } catch (e) {
@@ -378,7 +355,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
                 type="email"
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
-                placeholder="harisking5555@gmail.com"
+                placeholder="info@ammamafoods.com"
                 required
                 className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:outline-none focus:border-[#155D27] focus:bg-white transition-colors"
               />
@@ -414,31 +391,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onShowToast }) => {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-stone-200" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase">
-              <span className="bg-white px-2 text-stone-400 font-semibold tracking-wider">
-                Or Verified Super-Admin
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Super Admin Button with UID OOTzkvnl9uMtd6yDY6D4fojphwv2 */}
-          <button
-            type="button"
-            onClick={handleQuickSuperAdminLogin}
-            className="w-full py-2.5 bg-[#FAF9F5] hover:bg-stone-100 border border-stone-300 text-stone-800 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <ShieldCheck className="w-4 h-4 text-[#155D27]" />
-            <span>1-Click Super Admin Login (UID: OOTzkvnl9u...)</span>
-          </button>
-
-          <div className="text-center pt-2">
+          <div className="text-center pt-2 border-t border-stone-100">
             <span className="text-[10px] text-stone-400">
-              SECP Corporate Unique Identity No. 0303557 · Section 16 Companies Act-2017
+              Authorized personnel only · SECP Corporate Identity No. 0303557
             </span>
           </div>
         </div>

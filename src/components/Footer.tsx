@@ -15,111 +15,119 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
   };
 
   return (
-    <footer className="bg-[#122A1C] text-stone-300 pt-14 pb-10 border-t border-[#1C3B2A]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Brand Identity & SECP Compliance */}
-          <div className="md:col-span-4 space-y-4">
+    <footer className="bg-[#122A1C] text-stone-300 pt-10 pb-8 border-t border-[#1C3B2A] text-left">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start text-left">
+          {/* Brand Identity: Ammama Wellness Shelf on two lines without subtitle */}
+          <div className="md:col-span-4 space-y-3 text-left">
             <button
               onClick={() => handleNav('home')}
-              className="focus:outline-none cursor-pointer text-left"
+              className="focus:outline-none cursor-pointer text-left block"
             >
-              <AmmamaLogo size="lg" inverted={true} />
+              <AmmamaLogo size="lg" inverted={true} showSubtitle={false} twoLineTitle={true} />
             </button>
 
-            <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
+            <p className="text-xs text-stone-400 leading-relaxed max-w-sm text-left">
               Pure organic foods &amp; herbal formulas crafted with authentic botanical integrity. Formulated to support vital organs, natural vitality, and cellular longevity.
             </p>
           </div>
 
-          {/* Catalog Links */}
-          <div className="md:col-span-3 space-y-2.5">
-            <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider">
+          {/* Catalog Links - Left aligned */}
+          <div className="md:col-span-3 space-y-2.5 text-left">
+            <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider text-left">
               Explore Store
             </h4>
-            <ul className="space-y-2 text-xs text-stone-400">
-              <li>
+            <ul className="space-y-1.5 text-xs text-stone-400 text-left">
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Terra Herbs-8 (Flagship Formula)
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
-                  Pure Berry Nectar Honey of Karak
+                  Pure Beiry Nectar Honey of Karak
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Cholistan Pure Desi Ghee
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Mudanya Extra Virgin Olive Oil (5L)
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Mundial &amp; Pomace Olive Oils
+                </button>
+              </li>
+              <li className="text-left">
+                <button
+                  onClick={() => handleNav('products')}
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
+                >
+                  Canola &amp; Mustard Cooking Oils
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Governance & Admin Portal Option */}
-          <div className="md:col-span-2 space-y-2.5">
-            <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider">
+          {/* Governance & Care - Strictly Left Aligned */}
+          <div className="md:col-span-2 space-y-2.5 text-left">
+            <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider text-left">
               Governance &amp; Care
             </h4>
-            <ul className="space-y-2 text-xs text-stone-400">
-              <li>
+            <ul className="space-y-1.5 text-xs text-stone-400 text-left">
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('customer-hub')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Customer Reviews &amp; Tracking
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('contact')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Peshawar Store &amp; Contact
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('events')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   Botanical Research &amp; Studies
                 </button>
               </li>
-              <li>
+              <li className="text-left">
                 <button
                   onClick={() => handleNav('governance')}
-                  className="hover:text-white transition-colors cursor-pointer"
+                  className="hover:text-white transition-colors cursor-pointer text-left block"
                 >
                   SECP Credentials &amp; Policies
                 </button>
               </li>
-              <li className="pt-2">
+              <li className="pt-2 text-left">
                 <button
                   onClick={() => handleNav('admin')}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#1F412D] hover:bg-[#28573D] text-[#E6C687] hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer"
@@ -132,36 +140,36 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             </ul>
           </div>
 
-          {/* Store Location & Direct Contact Info (NO excessive WhatsApp button) */}
-          <div className="md:col-span-3 space-y-3">
-            <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider">
+          {/* Store Location & Direct Contact Info */}
+          <div className="md:col-span-3 space-y-2.5 text-left">
+            <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider text-left">
               Ammama Wellness Shelf
             </h4>
-            <div className="space-y-2 text-xs text-stone-400">
-              <div className="flex items-start gap-2">
+            <div className="space-y-2 text-xs text-stone-400 text-left">
+              <div className="flex items-start gap-2 text-left">
                 <MapPin className="w-4 h-4 text-[#E6C687] shrink-0 mt-0.5" />
-                <span className="leading-snug">{COMPANY_INFO.address}</span>
+                <span className="leading-snug text-left">{COMPANY_INFO.address}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-left">
                 <Phone className="w-4 h-4 text-[#E6C687] shrink-0" />
                 <span className="font-mono text-stone-200">{COMPANY_INFO.phone}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-left">
                 <Mail className="w-4 h-4 text-[#E6C687] shrink-0" />
                 <span>{COMPANY_INFO.email}</span>
               </div>
             </div>
-            <div className="p-2.5 bg-[#183925] rounded-lg border border-[#214D32] text-[11px] text-stone-300">
+            <div className="p-2.5 bg-[#183925] rounded-lg border border-[#214D32] text-[11px] text-stone-300 text-left">
               <span className="text-[#E6C687] font-semibold block mb-0.5">Nationwide Service</span>
-              Cash on Delivery (COD) across Pakistan. Free delivery on orders over PKR 3,500 and all Olive Oil 5L packs.
+              Cash on Delivery (COD) across Pakistan. Free delivery on orders over PKR 5,000 and select items.
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-6 border-t border-[#1F412D] flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-400 gap-3">
-          <p>© 2025–2026 {COMPANY_INFO.brandName} · AMMAMA FOODS (PVT.) LTD. All rights reserved.</p>
-          <div className="flex items-center gap-4">
+        <div className="pt-5 border-t border-[#1F412D] flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-stone-400 gap-3 text-left">
+          <p className="text-left">© 2025–2026 {COMPANY_INFO.brandName} · AMMAMA FOODS (PVT.) LTD. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-left">
             <button
               onClick={() => handleNav('governance')}
               className="hover:text-white transition-colors cursor-pointer"

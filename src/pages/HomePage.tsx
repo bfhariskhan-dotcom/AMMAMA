@@ -199,41 +199,41 @@ export const HomePage: React.FC<HomePageProps> = ({
   const minerals = ['Potassium', 'Magnesium', 'Manganese', 'Calcium', 'Iron'];
 
   return (
-    <div className="space-y-24 pb-20 text-left">
+    <div className="space-y-8 sm:space-y-12 pb-14 text-left">
       {/* 1. CINEMATIC FULL-WIDTH BANNER SLIDER (STRICTLY NO PRICING) */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#F2EFE8] via-[#FAF9F5] to-[#FAF9F5] border-b border-stone-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center min-h-[460px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-14">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[380px] sm:min-h-[440px]">
             {/* Slide Text Content */}
-            <div className="lg:col-span-7 space-y-6">
-              <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#0D3818] leading-[1.14]">
+            <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+              <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#0D3818] leading-[1.15]">
                 {slides[currentSlide].title}
               </h1>
 
-              <p className="text-stone-600 text-sm sm:text-base leading-relaxed max-w-xl">
+              <p className="text-stone-600 text-xs sm:text-sm leading-relaxed max-w-xl">
                 {slides[currentSlide].subtitle}
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <button
                   onClick={slides[currentSlide].ctaAction}
-                  className="px-6 py-3.5 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-3 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold uppercase tracking-wider rounded-lg transition-all shadow-xs flex items-center gap-2 cursor-pointer"
                 >
                   <span>{slides[currentSlide].ctaText}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={slides[currentSlide].secondaryAction}
-                  className="px-6 py-3.5 bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors cursor-pointer shadow-2xs"
+                  className="px-5 py-3 bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors cursor-pointer shadow-2xs"
                 >
                   <span>{slides[currentSlide].secondaryText}</span>
                 </button>
               </div>
 
               {/* Slider Dots & Arrow Navigation */}
-              <div className="flex items-center gap-4 pt-4 text-xs text-stone-500">
+              <div className="flex items-center gap-4 pt-2 text-xs text-stone-500">
                 <div className="flex items-center gap-2">
                   {slides.map((_, idx) => (
                     <button
@@ -270,7 +270,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="lg:col-span-5 flex justify-center items-center">
               <div
                 onClick={slides[currentSlide].ctaAction}
-                className="relative w-full max-w-md h-[400px] sm:h-[480px] lg:h-[510px] bg-white rounded-3xl p-6 shadow-xl border border-stone-200/90 group cursor-pointer flex items-center justify-center overflow-hidden"
+                className="relative w-full max-w-md h-[320px] sm:h-[420px] lg:h-[460px] bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg border border-stone-200/90 group cursor-pointer flex items-center justify-center overflow-hidden"
               >
                 <img
                   src={slides[currentSlide].image}
@@ -283,46 +283,46 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 2. CORPORATE TRUST & GUARANTEE STRIP */}
+      {/* 2. CORPORATE TRUST & GUARANTEE STRIP (Horizontal sliding on mobile) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-2xs text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5" />
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 sm:grid sm:grid-cols-4 sm:gap-4 bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-2xs text-xs scrollbar-none">
+          <div className="flex items-center gap-3 shrink-0 min-w-[210px] sm:min-w-0 snap-start bg-stone-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+            <div className="w-9 h-9 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <strong className="block text-stone-900 font-serif text-sm">SECP Registered</strong>
-              <span className="text-stone-500 text-[11px]">UCI: 0303557 (Sec 16)</span>
+              <strong className="block text-stone-900 font-serif text-xs sm:text-sm">SECP Registered</strong>
+              <span className="text-stone-500 text-[10px] sm:text-[11px]">UCI: 0303557 (Sec 16)</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
-              <Award className="w-5 h-5" />
+          <div className="flex items-center gap-3 shrink-0 min-w-[210px] sm:min-w-0 snap-start bg-stone-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+            <div className="w-9 h-9 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
+              <Award className="w-4 h-4" />
             </div>
             <div>
-              <strong className="block text-stone-900 font-serif text-sm">PSQCA Aligned</strong>
-              <span className="text-stone-500 text-[11px]">Zero Synthetic Fillers</span>
+              <strong className="block text-stone-900 font-serif text-xs sm:text-sm">PSQCA Aligned</strong>
+              <span className="text-stone-500 text-[10px] sm:text-[11px]">Zero Synthetic Fillers</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
-              <Star className="w-5 h-5 text-[#C28E3A] fill-current" />
+          <div className="flex items-center gap-3 shrink-0 min-w-[210px] sm:min-w-0 snap-start bg-stone-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+            <div className="w-9 h-9 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
+              <Star className="w-4 h-4 text-[#C28E3A] fill-current" />
             </div>
             <div>
-              <strong className="block text-stone-900 font-serif text-sm">4.8 / 5.0 Rating</strong>
-              <span className="text-stone-500 text-[11px]">340+ Verified Buyers</span>
+              <strong className="block text-stone-900 font-serif text-xs sm:text-sm">4.8 / 5.0 Rating</strong>
+              <span className="text-stone-500 text-[10px] sm:text-[11px]">340+ Verified Buyers</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+          <div className="flex items-center gap-3 shrink-0 min-w-[210px] sm:min-w-0 snap-start bg-stone-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+            <div className="w-9 h-9 rounded-full bg-emerald-50 text-[#155D27] flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
             </div>
             <div>
-              <strong className="block text-stone-900 font-serif text-sm">Nationwide COD</strong>
-              <span className="text-stone-500 text-[11px]">Direct Courier Delivery</span>
+              <strong className="block text-stone-900 font-serif text-xs sm:text-sm">Nationwide COD</strong>
+              <span className="text-stone-500 text-[10px] sm:text-[11px]">Direct Courier Delivery</span>
             </div>
           </div>
         </div>
@@ -523,18 +523,13 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 5A. SLIDING CAROUSEL 1: FEATURED BOTANICAL ESSENTIALS & OILS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
-                Signature Formulations &amp; Premium Oils
-              </span>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                Interactive Slider
-              </span>
-            </div>
-            <h2 className="font-serif text-3xl font-bold text-[#0D3818] mt-1">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A] block">
+              Signature Formulations &amp; Premium Oils
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#0D3818] mt-1">
               Featured Flagship Collection
             </h2>
           </div>
@@ -555,14 +550,14 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => scrollCarousel(featuredCarouselRef, 'left')}
-                className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+                className="p-2 sm:p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
                 aria-label="Previous products"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => scrollCarousel(featuredCarouselRef, 'right')}
-                className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+                className="p-2 sm:p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
                 aria-label="Next products"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -574,7 +569,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Carousel Scroll Track */}
         <div
           ref={featuredCarouselRef}
-          className="flex gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none"
+          className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none"
         >
           {PRODUCTS.filter(
             (p) =>
@@ -586,11 +581,11 @@ export const HomePage: React.FC<HomePageProps> = ({
           ).map((prod) => (
             <div
               key={prod.id}
-              className="w-[280px] sm:w-[320px] shrink-0 snap-start bg-white rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
+              className="w-[230px] sm:w-[300px] shrink-0 snap-start bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
             >
               <div
                 onClick={() => onOpenSingleProduct(prod)}
-                className="relative bg-[#FAF9F5] aspect-square overflow-hidden flex items-center justify-center p-4 cursor-pointer"
+                className="relative bg-[#FAF9F5] aspect-square overflow-hidden flex items-center justify-center p-3 sm:p-4 cursor-pointer"
               >
                 <img
                   src={prod.image}
@@ -662,18 +657,13 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 5B. SLIDING CAROUSEL 2: ORGANIC POWDERS, SUPERFOOD SEEDS & VITALITY */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
-                Hygienic Dehydrated Roots, Seeds &amp; Formulations
-              </span>
-              <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                Multi-Pack Sizes
-              </span>
-            </div>
-            <h2 className="font-serif text-3xl font-bold text-[#0D3818] mt-1">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A] block">
+              Hygienic Dehydrated Roots, Seeds &amp; Formulations
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#0D3818] mt-1">
               Organic Powders &amp; Superfood Shelf
             </h2>
           </div>
@@ -681,14 +671,14 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => scrollCarousel(powdersCarouselRef, 'left')}
-              className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+              className="p-2 sm:p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
               aria-label="Previous powders"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => scrollCarousel(powdersCarouselRef, 'right')}
-              className="p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
+              className="p-2 sm:p-2.5 rounded-full bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 transition-colors shadow-2xs cursor-pointer hover:border-[#155D27]"
               aria-label="Next powders"
             >
               <ChevronRight className="w-4 h-4" />
@@ -699,7 +689,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Carousel Track for Powders & Superfoods */}
         <div
           ref={powdersCarouselRef}
-          className="flex gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none"
+          className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-none"
         >
           {PRODUCTS.filter(
             (p) =>
@@ -709,11 +699,11 @@ export const HomePage: React.FC<HomePageProps> = ({
           ).map((prod) => (
             <div
               key={prod.id}
-              className="w-[280px] sm:w-[320px] shrink-0 snap-start bg-white rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
+              className="w-[230px] sm:w-[300px] shrink-0 snap-start bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
             >
               <div
                 onClick={() => onOpenSingleProduct(prod)}
-                className="relative bg-[#FAF9F5] aspect-square overflow-hidden flex items-center justify-center p-4 cursor-pointer"
+                className="relative bg-[#FAF9F5] aspect-square overflow-hidden flex items-center justify-center p-3 sm:p-4 cursor-pointer"
               >
                 <img
                   src={prod.image}

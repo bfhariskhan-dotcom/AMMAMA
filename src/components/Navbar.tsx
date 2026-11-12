@@ -94,14 +94,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
           {/* Brand Logo - Official packaging emblem */}
           <button
             onClick={() => handleNavClick('home')}
             className="flex items-center focus:outline-none cursor-pointer py-1 shrink-0"
             aria-label="Ammama Wellness Shelf Home"
           >
-            <AmmamaLogo size="md" />
+            <AmmamaLogo size="md" hideTextOnMobile={true} />
           </button>
 
           {/* Clean Desktop Navigation with Dropdowns */}

@@ -269,14 +269,14 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
           {product.composition && (
             <div className="p-4 bg-[#F5F2EB] rounded-2xl border border-[#E4DECD] space-y-2 text-xs">
               <div className="flex items-center justify-between font-serif font-bold text-[#0D3818]">
-                <span>Standardized 8-Herb Compounding:</span>
+                <span>Proprietary 8-Herb Compounding:</span>
                 <span className="text-[11px] font-mono text-[#155D27]">200g Whole Matrix</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 text-[11px]">
                 {product.composition.map((c, idx) => (
                   <div key={idx} className="bg-white/80 p-1.5 rounded border border-stone-200/70">
                     <span className="font-semibold block text-stone-900">{c.ingredient}</span>
-                    <span className="text-stone-500 text-[10px]">{c.amount}</span>
+                    {c.localName && <span className="text-stone-500 text-[10px]">{c.localName}</span>}
                   </div>
                 ))}
               </div>
@@ -427,8 +427,8 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
                         </span>
                       )}
                     </div>
-                    <span className="font-mono text-xs font-bold bg-[#155D27]/10 text-[#155D27] px-2.5 py-1 rounded-full">
-                      {herb.amount}
+                    <span className="text-[10px] font-semibold bg-[#155D27]/10 text-[#155D27] px-2.5 py-1 rounded-full">
+                      100% Pure Herb
                     </span>
                   </div>
                   <p className="text-xs text-stone-600 leading-relaxed">

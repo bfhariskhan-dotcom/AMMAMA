@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PageTab, Product, CartItem, CategoryItem, ReviewItem } from './types';
-import { PRODUCTS, DEFAULT_CATEGORIES, REVIEWS } from './data/companyData';
+import { PRODUCTS, DEFAULT_CATEGORIES, REVIEWS, BRAND_ASSETS } from './data/companyData';
 import {
   fetchProductsFromFirestore,
   fetchCategoriesFromFirestore,
@@ -28,13 +28,45 @@ import { MousePointer2 } from 'lucide-react';
 export default function App() {
   const [activeTab, setActiveTab] = useState<PageTab>('home');
 
+  const sanitizeProducts = (list: Product[]): Product[] =>
+    list.map((p) => {
+      let next = { ...p };
+      if (next.id === 'cholestan-pure-desi-ghee') {
+        const oldUrl = 'Change-name-for-Desi-Ghee';
+        const unbundledPath = '/src/assets/images/cholestan_desi_ghee_';
+        const cleanImg = BRAND_ASSETS.cholistanGhee;
+        if (!next.image || next.image.includes(oldUrl) || next.image.includes(unbundledPath)) {
+          next.image = cleanImg;
+        }
+        if (next.images) {
+          next.images = next.images.map((img) =>
+            img.includes(oldUrl) || img.includes(unbundledPath) ? cleanImg : img
+          );
+        }
+      }
+      if (next.id === 'pure-beiry-nectar-honey' && next.name === 'Pure Beiry Nectar Honey of Karak') {
+        next.name = 'Pure Berry Honey - Karak';
+      }
+      if (next.id === 'terra-herbs-8' && next.composition) {
+        next.composition = next.composition.map(({ amount: _removed, ...rest }) => rest);
+      }
+      return next;
+    });
+
+  const sanitizeCategories = (list: CategoryItem[]): CategoryItem[] =>
+    list.map((c) =>
+      c.id === 'honey' && c.name === 'Raw Karak Honey'
+        ? { ...c, name: 'Pure Berry Honey - Karak' }
+        : c
+    );
+
   // Dynamic Catalog State (backed by localStorage + Firebase Firestore)
   const [products, setProducts] = useState<Product[]>(() => {
     try {
-      const saved = localStorage.getItem('ammama_catalog_products_v2');
+      const saved = localStorage.getItem('ammama_catalog_products_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return sanitizeProducts(parsed);
       }
     } catch (e) {
       console.error(e);
@@ -44,10 +76,10 @@ export default function App() {
 
   const [categories, setCategories] = useState<CategoryItem[]>(() => {
     try {
-      const saved = localStorage.getItem('ammama_catalog_categories_v2');
+      const saved = localStorage.getItem('ammama_catalog_categories_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return sanitizeCategories(parsed);
       }
     } catch (e) {
       console.error(e);
@@ -57,7 +89,7 @@ export default function App() {
 
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
     try {
-      const saved = localStorage.getItem('ammama_reviews_v2');
+      const saved = localStorage.getItem('ammama_reviews_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -90,13 +122,13 @@ export default function App() {
   useEffect(() => {
     fetchProductsFromFirestore().then((remoteProducts) => {
       if (remoteProducts && remoteProducts.length > 0) {
-        setProducts(remoteProducts);
+        setProducts(sanitizeProducts(remoteProducts));
       }
     });
 
     fetchCategoriesFromFirestore().then((remoteCategories) => {
       if (remoteCategories && remoteCategories.length > 0) {
-        setCategories(remoteCategories);
+        setCategories(sanitizeCategories(remoteCategories));
       }
     });
 
@@ -110,7 +142,7 @@ export default function App() {
   // Persist catalog, categories & reviews locally for instant reloads
   useEffect(() => {
     try {
-      localStorage.setItem('ammama_catalog_products_v2', JSON.stringify(products));
+      localStorage.setItem('ammama_catalog_products_v3', JSON.stringify(products));
     } catch (e) {
       console.error('Failed to persist products:', e);
     }
@@ -118,7 +150,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('ammama_catalog_categories_v2', JSON.stringify(categories));
+      localStorage.setItem('ammama_catalog_categories_v3', JSON.stringify(categories));
     } catch (e) {
       console.error('Failed to persist categories:', e);
     }
@@ -126,7 +158,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('ammama_reviews_v2', JSON.stringify(reviews));
+      localStorage.setItem('ammama_reviews_v3', JSON.stringify(reviews));
     } catch (e) {
       console.error('Failed to persist reviews:', e);
     }

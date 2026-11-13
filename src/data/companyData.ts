@@ -1,4 +1,7 @@
 import { Product, CategoryItem, JobPosition, ResearchItem, CompanyEvent, ReviewItem } from '../types';
+import ingredientsFlatlayImg from '../assets/images/eight_herbal_ingredients_flatlay_1794049280091.jpg';
+import farmHarvestImg from '../assets/images/organic_botanical_farm_harvest_1794049280997.jpg';
+import cholistanGheeImg from '../assets/images/cholestan_desi_ghee_1794594853855.jpg';
 
 export const COMPANY_INFO = {
   legalName: 'AMMAMA FOODS (PVT.) LTD.',
@@ -26,10 +29,10 @@ export const COMPANY_INFO = {
 
 export const BRAND_ASSETS = {
   terraHerbsJar: '/assets/terra_herbs_package_clean.jpg',
-  ingredientsFlatlay: '/src/assets/images/eight_herbal_ingredients_flatlay_1794049280091.jpg',
-  farmHarvest: '/src/assets/images/organic_botanical_farm_harvest_1794049280997.jpg',
+  ingredientsFlatlay: ingredientsFlatlayImg,
+  farmHarvest: farmHarvestImg,
   karakHoney: 'https://i.postimg.cc/D08J1jfs/Pure-Beiry-Nector-Honey-of-Karak.jpg',
-  cholistanGhee: 'https://i.postimg.cc/90rRy8X9/Change-name-for-Desi-Ghee-(Cholestan-pure-Desi-Ghee).jpg',
+  cholistanGhee: cholistanGheeImg,
   mudanyaOliveOil: 'https://i.postimg.cc/C5zBbPMJ/Mudanya-Olive-Oil-Price-10800-free-delivery.png',
   mudanyaInf: 'https://i.postimg.cc/VvdrXGsD/Mudanya-Olive-Oil-inf.png',
   mundialOliveOil: 'https://i.postimg.cc/ZnCB67YF/Mundial-Olive-Oil-price-10500-free-delivery.png',
@@ -40,7 +43,7 @@ export const BRAND_ASSETS = {
 
 export const DEFAULT_CATEGORIES: CategoryItem[] = [
   { id: 'formula', name: 'Flagship Herbal Formula', description: 'Protective 8-Herb & Mineral Blends', order: 1 },
-  { id: 'honey', name: 'Raw Karak Honey', description: 'Wild Unheated Sidr & Berry Nectar Honey', order: 2 },
+  { id: 'honey', name: 'Pure Berry Honey - Karak', description: 'Wild Unheated Sidr & Berry Nectar Honey', order: 2 },
   { id: 'ghee', name: 'Cholistan Desi Ghee', description: 'Authentic Bilona Cultured Desi Ghee', order: 3 },
   { id: 'olive-oil', name: 'Imported Olive Oils', description: 'Turkish & Spanish Extra Virgin and Pomace Oils', order: 4 },
 ];
@@ -85,7 +88,7 @@ export const CORE_VALUES = [
     number: '06',
     title: 'Integrity and Transparency',
     description:
-      'We are open about ingredients, exact gram ratios, origins, processing methods, fair pricing, and clean corporate governance.',
+      'We are open about pure botanical ingredients, ethical sourcing origins, processing methods, fair pricing, and clean corporate governance.',
     highlight: 'Full Ingredient Openness',
   },
 ];
@@ -176,49 +179,41 @@ export const PRODUCTS: Product[] = [
     composition: [
       {
         ingredient: 'Garlic',
-        amount: '30 Grams',
         localName: 'Lehsan',
         role: 'Natural antibacterial that fights infections, lowers bad cholesterol to support healthy heart function, and aids in weight management.',
       },
       {
         ingredient: 'Ginger',
-        amount: '25 Grams',
         localName: 'Adrak',
         role: 'With natural ginseng properties, improves male vitality by enhancing blood circulation, soothes gut digestion, and reduces inflammation.',
       },
       {
         ingredient: 'Kalwanji',
-        amount: '35 Grams',
         localName: 'Black Seed',
         role: 'Traditional remedy for general wellness, sustains healthy blood glucose levels, and supports respiratory and cellular health.',
       },
       {
         ingredient: 'Chia Seeds',
-        amount: '30 Grams',
         localName: 'Tukhm-e-Sharbati',
         role: 'Packed with plant omega-3 fatty acids, fiber, and protein. Regulates digestion and provides sustained natural energy.',
       },
       {
         ingredient: 'Methi Dana',
-        amount: '35 Grams',
         localName: 'Fenugreek',
         role: 'Improves digestion, supports healthy glucose metabolism, and helps sustain balanced endocrine function.',
       },
       {
         ingredient: 'Beetroot',
-        amount: '20 Grams',
         localName: 'Chukandar',
         role: 'Rich in dietary nitrates and antioxidants; promotes healthy blood flow, cardiovascular elasticity, and natural stamina.',
       },
       {
         ingredient: 'Turmeric',
-        amount: '10 Grams',
         localName: 'Haldi',
         role: 'High-potency curcuminoids combat chronic inflammation, support joint flexibility, and promote skin vitality.',
       },
       {
         ingredient: 'Black Pepper',
-        amount: '15 Grams',
         localName: 'Kaali Mirch',
         role: 'Piperine content multiplies nutrient and curcumin bioavailability by 20-fold while supporting respiratory and digestive wellness.',
       },
@@ -231,7 +226,7 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'pure-beiry-nectar-honey',
-    name: 'Pure Beiry Nectar Honey of Karak',
+    name: 'Pure Berry Honey - Karak',
     subtitle: 'Wild Sidr (Beri) Nectar Harvest',
     category: 'honey',
     packagingType: 'Jar',
@@ -247,9 +242,9 @@ export const PRODUCTS: Product[] = [
     images: [BRAND_ASSETS.karakHoney],
     badge: 'Free Delivery · Wild Karak',
     shortDescription:
-      'Unpasteurized raw Sidr (Beri) Nectar Honey ethically harvested from the wild Beri forests of Karak, Khyber Pakhtunkhwa.',
+      'Unpasteurized Pure Berry Honey - Karak ethically harvested from wild Sidr (Beri) forests of Karak, Khyber Pakhtunkhwa.',
     fullDescription:
-      'Pure Beiry Nectar Honey of Karak is gathered directly from natural bee hives situated in the arid wild flora of Karak. Never subjected to industrial heat or micro-filtration, it retains active bio-enzymes, bee pollen, propolis, and an exquisite butterscotch caramel profile with potent immune-boosting and soothing properties.',
+      'Pure Berry Honey - Karak is gathered directly from natural bee hives situated in the arid wild flora of Karak. Never subjected to industrial heat or micro-filtration, it retains active bio-enzymes, bee pollen, propolis, and an exquisite butterscotch caramel profile with potent immune-boosting and soothing properties.',
     benefits: [
       'Wild forest harvested from pristine Sidr (Ziziphus) trees in Karak',
       '100% raw, unheated, unfiltered with intact bee pollen and enzymes',
@@ -396,7 +391,7 @@ export const RESEARCH_PAPERS: ResearchItem[] = [
     summary:
       'An analytical breakdown of how thymoquinone from Kalonji and curcuminoids from Turmeric act synergistically with piperine from Black Pepper to enhance cellular uptake by over 20-fold.',
     keyFindings: [
-      'Curcumin bioavailability is amplified by 2000% when compounded with black pepper piperine at a 1:1.5 stoichiometric ratio.',
+      'Curcumin bioavailability is significantly amplified when naturally compounded with black pepper piperine.',
       'Kalonji seed volatile fractions demonstrate significant modulation of fasting serum lipids.',
       'Whole-seed matrix provides natural plant lipids that protect active compounds during gastric transit.',
     ],
@@ -411,7 +406,7 @@ export const RESEARCH_PAPERS: ResearchItem[] = [
     summary:
       'Investigating the endogenous conversion of inorganic nitrates from Beta Vulgaris into nitric oxide (NO), enhancing vasodilation, athletic endurance, and peripheral blood oxygenation.',
     keyFindings: [
-      '20 grams of standardized dried beetroot yields optimal daily dietary nitrates without synthetic nitrate spikes.',
+      'Standardized dried beetroot botanical powder yields optimal daily dietary nitrates without synthetic spikes.',
       'Sustained reduction in peripheral vascular resistance noted among regular adult participants.',
       'Complementary synergism with raw garlic allicin protects against endothelial oxidative stress.',
     ],
@@ -568,12 +563,12 @@ export const REVIEWS: ReviewItem[] = [
     id: 'rev-02',
     name: 'Dr. Fatima Riaz',
     city: 'Lahore',
-    product: 'Wild Potohar Sidr Honey & Terra Herbs-8',
+    product: 'Pure Berry Honey - Karak & Terra Herbs-8',
     rating: 5,
     date: '28 December 2025',
     verified: true,
     comment:
-      'As a clinical physician, I appreciate that AMMAMA Foods explicitly lists the exact gram weights of each ingredient right on the label instead of keeping it a mystery formula. The raw Sidr honey is also authentic, unheated, and of highest purity.',
+      'As a clinical physician, I appreciate that AMMAMA Foods uses genuine traceable botanical ingredients rather than synthetic fillers. The Pure Berry Honey - Karak is also authentic, unheated, and of the highest purity.',
   },
   {
     id: 'rev-03',

@@ -73,7 +73,7 @@ const DEFAULT_SAMPLE_ORDERS: AdminOrder[] = [
     customerAddress: 'House 42-B, Sector Y, Phase 3, DHA',
     items: [
       { productName: 'Terra Herbs-8', packagingType: 'Stand up Pouch', weight: '200 grams', quantity: 2, price: 1450 },
-      { productName: 'Pure Beiry Nectar Honey of Karak', packagingType: 'Jar', weight: '500 grams', quantity: 1, price: 2200 },
+      { productName: 'Pure Berry Honey - Karak', packagingType: 'Jar', weight: '500 grams', quantity: 1, price: 2200 },
     ],
     subtotal: 5100,
     deliveryFee: 0,

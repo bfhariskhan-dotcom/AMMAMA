@@ -212,7 +212,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   {activeTab === 'composition' && product.composition && (
                     <div className="space-y-2">
                       <p className="text-[11px] text-stone-500">
-                        Exact pharmaceutical & botanical compounding:
+                        Pure synergistic herbal blend:
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         {product.composition.map((c, idx) => (
@@ -222,7 +222,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           >
                             <div className="flex justify-between items-baseline font-semibold text-stone-900">
                               <span>{c.ingredient}</span>
-                              <span className="font-mono text-[#1C432E]">{c.amount}</span>
+                              {c.localName && (
+                                <span className="text-[10px] text-[#1C432E]">{c.localName}</span>
+                              )}
                             </div>
                             <p className="text-[10px] text-stone-500 mt-0.5">{c.role}</p>
                           </div>

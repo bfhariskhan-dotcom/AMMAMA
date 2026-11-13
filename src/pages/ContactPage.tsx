@@ -137,7 +137,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onShowToast }) => {
                 When we founded <strong>AMMAMA Foods (Pvt.) Ltd.</strong>, we observed a troubling reality in Pakistan: widespread adulteration of staple foods, undisclosed fillers in herbal tonics, and an absence of verifiable transparency.
               </p>
               <p>
-                We established AMMAMA Foods with an uncompromising charter: to prepare and preserve pure organic foods and therapeutic herbs with verifiable botanical integrity. When you examine our flagship formula, <strong>Terra Herbs-8</strong>, you will find no ambiguous proprietary blends—every single ingredient (from our 30g of Garlic and 35g of Kalonji down to our 10g of Turmeric) is transparently measured, third-party lab-tested, and printed directly upon the packaging.
+                We established AMMAMA Foods with an uncompromising charter: to prepare and preserve pure organic foods and therapeutic herbs with verifiable botanical integrity. When you examine our flagship formula, <strong>Terra Herbs-8</strong>, every organic ingredient is third-party lab-tested, carefully standardized, and crafted with zero synthetic fillers or preservatives.
               </p>
               <p>
                 We look forward to serving your household and advancing a healthier, more balanced Pakistan.

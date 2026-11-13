@@ -79,7 +79,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     {
       id: 2,
       eyebrow: 'Wild Harvest · Karak Mountains',
-      title: 'Pure Berry Nectar Honey of Karak',
+      title: 'Pure Berry Honey - Karak',
       subtitle:
         '100% raw, unheated single-origin Sidr berry nectar harvested from wild Beri trees across Karak. Rich in natural enzymes and soothing antioxidants.',
       image: karakHoney?.image || BRAND_ASSETS.karakHoney,
@@ -165,49 +165,41 @@ export const HomePage: React.FC<HomePageProps> = ({
   const herbDetails = [
     {
       name: 'Garlic',
-      amount: '30 Grams',
       urdu: 'Lehsan',
       desc: 'Natural antibacterial that fights infections and boosts immune system, helps in lowering bad cholesterol to support healthy function of heart, and supportive in weight loss.',
     },
     {
       name: 'Ginger',
-      amount: '25 Grams',
       urdu: 'Adrak',
       desc: 'With natural ginseng properties, improves men sexual health by enhancing blood circulation, supportive in stomach guts, improves digestion, soothes nausea, and a powerful anti-inflammatory that reduces pain.',
     },
     {
       name: 'Kalwanji',
-      amount: '35 Grams',
       urdu: 'Black Seed',
       desc: 'Traditionally known as black seed cure due to its immune boosting properties. Supportive in sustaining healthy blood sugar levels, and aids in respiratory health.',
     },
     {
       name: 'Chia Seeds',
-      amount: '30 Grams',
       urdu: 'Tukhm-e-Sharbati',
       desc: 'Packed with omega-3 fatty acids, fiber, and protein. Helps regulate digestion, supports heart health, and provides a natural energy boost.',
     },
     {
       name: 'Methi Dana',
-      amount: '35 Grams',
       urdu: 'Fenugreek',
       desc: 'A powerful herb to improve digestion, reduce cholesterol, and support hormonal balance; a great ally for overall wellness.',
     },
     {
       name: 'Beetroot',
-      amount: '20 Grams',
       urdu: 'Chukandar',
       desc: 'Rich in nitrates and antioxidants; supports healthy blood flow, reduces blood pressure, and enhances sexual stamina and performance.',
     },
     {
       name: 'Turmeric',
-      amount: '10 Grams',
       urdu: 'Haldi',
       desc: 'Known for its potent antioxidant properties; helps combat inflammation, supports joint health, and promotes radiant skin.',
     },
     {
       name: 'Black Pepper',
-      amount: '15 Grams',
       urdu: 'Kaali Mirch',
       desc: 'Enhances the bioavailability of turmeric and other nutrients while supporting digestion, detoxification, calcium absorption, and respiratory health.',
     },
@@ -673,9 +665,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                       <span className="font-serif text-xs sm:text-sm block mt-0.5 truncate">
                         {herb.name}
                       </span>
-                      <span className="font-mono text-[11px] font-semibold mt-0.5 block">
-                        {herb.amount}
-                      </span>
                     </button>
                   );
                 })}
@@ -684,7 +673,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="bg-[#0D3818] p-4 rounded-2xl border border-emerald-800/80 space-y-2">
                 <div className="flex items-baseline justify-between border-b border-emerald-900 pb-1.5">
                   <h4 className="font-serif text-base sm:text-lg font-bold text-white">
-                    {herbDetails[selectedHerb].name} ({herbDetails[selectedHerb].amount})
+                    {herbDetails[selectedHerb].name}
                   </h4>
                   <span className="text-[11px] text-emerald-300 italic">
                     {herbDetails[selectedHerb].urdu}

@@ -34,7 +34,7 @@ export interface Product {
   benefits: string[];
   composition?: {
     ingredient: string;
-    amount: string;
+    amount?: string;
     localName?: string;
     role: string;
   }[];

@@ -13,10 +13,12 @@ import {
   Box,
   Truck,
 } from 'lucide-react';
-import { Product } from '../types';
-import { PRODUCTS, COMPANY_INFO } from '../data/companyData';
+import { Product, CategoryItem } from '../types';
+import { COMPANY_INFO } from '../data/companyData';
 
 interface ProductsPageProps {
+  products: Product[];
+  categories: CategoryItem[];
   onOpenProductModal: (product: Product) => void;
   onOpenSingleProduct?: (product: Product) => void;
   onAddToCart: (product: Product, quantity: number) => void;
@@ -25,6 +27,8 @@ interface ProductsPageProps {
 }
 
 export const ProductsPage: React.FC<ProductsPageProps> = ({
+  products,
+  categories,
   onOpenProductModal,
   onOpenSingleProduct,
   onAddToCart,
@@ -46,19 +50,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
   const [inquiryQty, setInquiryQty] = useState(1);
   const [inquiryNote, setInquiryNote] = useState('');
 
-  const categories = [
-    { id: 'all', label: 'All Products (16)' },
-    { id: 'formula', label: 'Flagship Formulas' },
-    { id: 'cooking-oil', label: 'Canola & Mustard Oils' },
-    { id: 'olive-oil', label: 'Imported Olive Oils' },
-    { id: 'honey', label: 'Raw Karak Honey' },
-    { id: 'ghee', label: 'Cholistan Desi Ghee' },
-    { id: 'herbal-powder', label: 'Organic Powders' },
-    { id: 'superfood', label: 'Chia & Kalonji Seeds' },
-    { id: 'vitality', label: 'Vitality & Stamina' },
+  const categoryTabs = [
+    { id: 'all', label: `All (${products.length})` },
+    ...categories.map((c) => ({ id: c.id, label: c.name })),
   ];
 
-  const filteredProducts = PRODUCTS.filter((p) => {
+  const filteredProducts = products.filter((p) => {
     const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,12 +74,6 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
     onShowToast(`Direct link for ${product.name} copied to clipboard!`);
   };
 
-  const handleDirectWhatsAppOrder = (product: Product) => {
-    const message = `Assalam-o-Alaikum Ammama Wellness Shelf (UCI: ${COMPANY_INFO.uci}),\nI want to place an order for:\n• ${product.name} (${product.packagingType || ''} - ${product.weight}) - Price: PKR ${product.price.toLocaleString()}\nPlease guide me on delivery and confirmation.`;
-    window.open(`https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
-    onShowToast(`Opening WhatsApp order for ${product.name}...`);
-  };
-
   const handleConfirmInquiry = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inquiryModalProduct) return;
@@ -94,21 +85,21 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-10">
+    <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-7">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 sm:pb-6 border-b border-stone-200">
-        <div className="max-w-2xl space-y-1.5 sm:space-y-2">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-stone-200">
+        <div className="max-w-2xl space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#155D27] bg-[#155D27]/10 px-2.5 py-0.5 rounded-full">
-              Full Organic Catalog
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#155D27] bg-[#155D27]/10 px-2.5 py-0.5 rounded-full">
+              Pure Organic Catalog
             </span>
-            <span className="text-xs text-stone-400">· 16 Verified Formulations</span>
+            <span className="text-xs text-stone-400">· {products.length} Verified Formulations</span>
           </div>
-          <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-[#142A1E]">
+          <h1 className="font-serif text-2xl sm:text-4xl font-bold text-[#142A1E]">
             Ammama Wellness Shelf
           </h1>
           <p className="text-stone-600 text-xs sm:text-sm leading-relaxed">
-            Formulated and preserved in Pakistan with verified botanical proportions, multi-size packaging options, zero chemical additives, and complete laboratory transparency.
+            Pure organic foods, raw honey, cultured desi ghee &amp; cold-pressed olive oils delivered nationwide across Pakistan.
           </p>
         </div>
 
@@ -119,19 +110,19 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search oils, herbs, honey, ghee..."
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-stone-300 rounded-xl text-xs focus:border-[#1C432E] focus:outline-none shadow-2xs"
+            placeholder="Search products..."
+            className="w-full pl-9 pr-4 py-2 bg-white border border-stone-300 rounded-xl text-xs focus:border-[#1C432E] focus:outline-none shadow-2xs"
           />
         </div>
       </div>
 
       {/* Interactive Category Segmented Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        {categories.map((cat) => (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {categoryTabs.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
               selectedCategory === cat.id
                 ? 'bg-[#1C432E] text-white shadow-xs'
                 : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200'
@@ -142,126 +133,136 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
         ))}
       </div>
 
-      {/* Product Grid - 2 columns on mobile, 2 on md, 3 on lg */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-        {filteredProducts.map((product) => (
-          <div
-            key={product.id}
-            className={`bg-white rounded-2xl sm:rounded-3xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group shadow-2xs hover:shadow-md ${
-              product.isFlagship
-                ? 'border-[#C28E3A]/60 ring-1 ring-[#C28E3A]/20'
-                : 'border-stone-200 hover:border-stone-300'
-            }`}
+      {/* Product Grid - 2 columns on mobile, 3 on lg */}
+      {filteredProducts.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-stone-200 p-10 text-center space-y-2">
+          <p className="font-serif text-lg font-bold text-stone-800">No products found in this category</p>
+          <button
+            onClick={() => {
+              setSelectedCategory('all');
+              setSearchQuery('');
+            }}
+            className="px-4 py-1.5 bg-[#155D27] text-white text-xs font-semibold rounded-lg whitespace-nowrap cursor-pointer"
           >
-            {/* Image Box */}
+            View All Products
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+          {filteredProducts.map((product) => (
             <div
-              onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
-              className="relative bg-[#FAF9F5] aspect-square sm:aspect-4/3 overflow-hidden flex items-center justify-center p-3 sm:p-6 cursor-pointer"
+              key={product.id}
+              className={`bg-white rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group shadow-2xs hover:shadow-md ${
+                product.isFlagship
+                  ? 'border-[#C28E3A]/60 ring-1 ring-[#C28E3A]/20'
+                  : 'border-stone-200 hover:border-stone-300'
+              }`}
             >
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-104"
-              />
+              {/* Portrait Image Box (Never Cropped) */}
+              <div
+                onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
+                className="relative bg-[#FAF9F5] aspect-[4/4.3] overflow-hidden flex items-center justify-center p-2.5 sm:p-4 cursor-pointer"
+              >
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-103"
+                />
 
-              {product.badge && (
-                <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#1C432E] text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
-                  {product.badge}
-                </div>
-              )}
+                {product.badge && (
+                  <div className="absolute top-2 left-2 bg-[#1C432E] text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs max-w-[75%] truncate">
+                    {product.badge}
+                  </div>
+                )}
 
-              <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex items-center gap-1">
-                {/* Share Link Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleCopyLink(product, e)}
-                  className="p-1.5 sm:p-2 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
-                  title="Copy Product Link"
-                >
-                  <Share2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </button>
-
-                {/* Quick eye modal trigger */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenProductModal(product);
-                  }}
-                  className="p-1.5 sm:p-2 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
-                  title="View Botanical Specs"
-                >
-                  <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </button>
-              </div>
-
-              <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-stone-700 border border-stone-200">
-                {product.weight}
-              </div>
-            </div>
-
-            {/* Product Body */}
-            <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between space-y-2.5 sm:space-y-4">
-              <div className="space-y-1 sm:space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] sm:text-xs text-stone-500">
-                  <span className="uppercase tracking-wider font-semibold text-[#C28E3A] truncate">
-                    {product.packagingType || 'Packaging'}
-                  </span>
-                  <span
-                    className={`font-semibold text-[9px] sm:text-[10px] px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full ${
-                      product.delivery === 'Free'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-stone-100 text-stone-600'
-                    }`}
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopyLink(product, e)}
+                    className="p-1.5 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
+                    title="Copy Product Link"
                   >
-                    {product.delivery === 'Free' ? 'Free Del.' : 'COD'}
-                  </span>
+                    <Share2 className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenProductModal(product);
+                    }}
+                    className="p-1.5 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C432E] rounded-full shadow-xs transition-colors cursor-pointer"
+                    title="Quick View"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
                 </div>
 
-                <h3
-                  onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
-                  className="font-serif font-bold text-sm sm:text-lg text-stone-900 group-hover:text-[#1C432E] transition-colors cursor-pointer line-clamp-1"
-                >
-                  {product.name}
-                </h3>
-
-                <p className="text-[11px] sm:text-xs text-stone-500 line-clamp-2 leading-relaxed hidden sm:block">
-                  {product.shortDescription}
-                </p>
+                <div className="absolute bottom-2 left-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/95 text-stone-700 border border-stone-200">
+                  {product.weight}
+                </div>
               </div>
 
-              {/* Price & Purchase Actions */}
-              <div className="pt-2 sm:pt-3 border-t border-stone-100 space-y-2 sm:space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <span className="font-serif font-bold text-base sm:text-xl text-[#1C432E]">
-                      PKR {product.price.toLocaleString()}
+              {/* Product Body */}
+              <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-2">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] text-stone-500">
+                    <span className="uppercase tracking-wider font-semibold text-[#C28E3A] truncate">
+                      {product.packagingType || 'Pack'}
+                    </span>
+                    <span
+                      className={`font-semibold text-[9px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                        product.delivery === 'Free'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-stone-100 text-stone-600'
+                      }`}
+                    >
+                      {product.delivery === 'Free' ? 'Free Del.' : 'COD'}
                     </span>
                   </div>
+
+                  <h3
+                    onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
+                    className="font-serif font-bold text-sm sm:text-base text-stone-900 group-hover:text-[#1C432E] transition-colors cursor-pointer line-clamp-1"
+                  >
+                    {product.name}
+                  </h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                  <button
-                    onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
-                    className="py-1.5 sm:py-2.5 px-1.5 sm:px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[10px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-colors text-center cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <span>Details</span>
-                    <ArrowRight className="w-3 h-3 hidden sm:inline" />
-                  </button>
+                {/* Price & Single-Line Purchase Actions */}
+                <div className="pt-2 border-t border-stone-100 space-y-2">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="font-serif font-bold text-base sm:text-lg text-[#1C432E] whitespace-nowrap">
+                      PKR {product.price.toLocaleString()}
+                    </span>
+                    {product.compareAtPrice && product.compareAtPrice > product.price && (
+                      <span className="text-[10px] text-stone-400 line-through whitespace-nowrap">
+                        PKR {product.compareAtPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
 
-                  <button
-                    onClick={() => onAddToCart(product, 1)}
-                    className="py-1.5 sm:py-2.5 px-1.5 sm:px-3 bg-[#1C432E] hover:bg-[#25573C] text-white text-[10px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-colors text-center cursor-pointer shadow-xs flex items-center justify-center gap-1"
-                  >
-                    <ShoppingBag className="w-3 h-3" />
-                    <span>Add</span>
-                  </button>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() => (onOpenSingleProduct ? onOpenSingleProduct(product) : onOpenProductModal(product))}
+                      className="py-1.5 px-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold rounded-lg transition-colors text-center whitespace-nowrap cursor-pointer"
+                    >
+                      Details
+                    </button>
+
+                    <button
+                      onClick={() => onAddToCart(product, 1)}
+                      className="py-1.5 px-2 bg-[#1C432E] hover:bg-[#25573C] text-white text-[11px] font-semibold rounded-lg transition-colors text-center whitespace-nowrap cursor-pointer shadow-xs inline-flex items-center justify-center gap-1"
+                    >
+                      <ShoppingBag className="w-3 h-3 shrink-0" />
+                      <span>Add</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Direct Sell / Customer Inquiry Floating Modal */}
       {inquiryModalProduct && (

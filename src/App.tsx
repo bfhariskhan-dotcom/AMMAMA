@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { PageTab, Product, CartItem } from './types';
-import { PRODUCTS } from './data/companyData';
+import React, { useState, useEffect, useRef } from 'react';
+import { PageTab, Product, CartItem, CategoryItem, ReviewItem } from './types';
+import { PRODUCTS, DEFAULT_CATEGORIES, REVIEWS } from './data/companyData';
+import {
+  fetchProductsFromFirestore,
+  fetchCategoriesFromFirestore,
+  fetchFeedbackFromFirestore,
+} from './lib/firebase';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { CustomCursor } from './components/CustomCursor';
@@ -18,10 +23,51 @@ import { CareersPage } from './pages/CareersPage';
 import { CustomerHubPage } from './pages/CustomerHubPage';
 import { GovernancePage } from './pages/GovernancePage';
 import { AdminPage } from './pages/AdminPage';
-import { MousePointer2, Sparkles } from 'lucide-react';
+import { MousePointer2 } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<PageTab>('home');
+
+  // Dynamic Catalog State (backed by localStorage + Firebase Firestore)
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('ammama_catalog_products_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return PRODUCTS;
+  });
+
+  const [categories, setCategories] = useState<CategoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('ammama_catalog_categories_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return DEFAULT_CATEGORIES;
+  });
+
+  const [reviews, setReviews] = useState<ReviewItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('ammama_reviews_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return REVIEWS;
+  });
+
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem('ammama_cart');
@@ -32,18 +78,77 @@ export default function App() {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedProductForPage, setSelectedProductForPage] = useState<Product>(() => PRODUCTS[0]);
+  const [selectedProductForPage, setSelectedProductForPage] = useState<Product>(() => products[0] || PRODUCTS[0]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cursorActive, setCursorActive] = useState<boolean>(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
 
-  // Listen to hash changes for direct product URLs e.g. #product/canola-cooking-oil
+  const productsRef = useRef(products);
+  productsRef.current = products;
+
+  // Fetch live catalog, categories & reviews from Firebase Firestore on mount
+  useEffect(() => {
+    fetchProductsFromFirestore().then((remoteProducts) => {
+      if (remoteProducts && remoteProducts.length > 0) {
+        setProducts(remoteProducts);
+      }
+    });
+
+    fetchCategoriesFromFirestore().then((remoteCategories) => {
+      if (remoteCategories && remoteCategories.length > 0) {
+        setCategories(remoteCategories);
+      }
+    });
+
+    fetchFeedbackFromFirestore().then((remoteReviews) => {
+      if (remoteReviews && remoteReviews.length > 0) {
+        setReviews(remoteReviews);
+      }
+    });
+  }, []);
+
+  // Persist catalog, categories & reviews locally for instant reloads
+  useEffect(() => {
+    try {
+      localStorage.setItem('ammama_catalog_products_v2', JSON.stringify(products));
+    } catch (e) {
+      console.error('Failed to persist products:', e);
+    }
+  }, [products]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ammama_catalog_categories_v2', JSON.stringify(categories));
+    } catch (e) {
+      console.error('Failed to persist categories:', e);
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ammama_reviews_v2', JSON.stringify(reviews));
+    } catch (e) {
+      console.error('Failed to persist reviews:', e);
+    }
+  }, [reviews]);
+
+  // Keep selectedProductForPage synced if edited in Admin
+  useEffect(() => {
+    const updated = products.find((p) => p.id === selectedProductForPage?.id);
+    if (updated) {
+      setSelectedProductForPage(updated);
+    } else if (products.length > 0) {
+      setSelectedProductForPage(products[0]);
+    }
+  }, [products, selectedProductForPage?.id]);
+
+  // Listen to hash changes for direct URLs
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
       if (hash.startsWith('#product/')) {
         const prodId = hash.replace('#product/', '');
-        const found = PRODUCTS.find((p) => p.id === prodId);
+        const found = productsRef.current.find((p) => p.id === prodId);
         if (found) {
           setSelectedProductForPage(found);
           setActiveTab('single-product');
@@ -118,6 +223,10 @@ export default function App() {
     setCartItems([]);
   };
 
+  const handleAddReview = (newRev: ReviewItem) => {
+    setReviews((prev) => [newRev, ...prev]);
+  };
+
   const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
@@ -125,12 +234,13 @@ export default function App() {
       {/* Custom organic trailing cursor */}
       <CustomCursor enabled={cursorActive} />
 
-      {/* Main Navigation Top Bar with Dropdowns and AmmamaLogo */}
+      {/* Main Navigation Top Bar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         cartCount={totalCartCount}
         openCart={() => setIsCartOpen(true)}
+        categories={categories}
         onSelectProductCategory={(cat) => setSelectedCategoryFilter(cat)}
       />
 
@@ -138,6 +248,8 @@ export default function App() {
       <main className="flex-1">
         {activeTab === 'home' && (
           <HomePage
+            products={products}
+            reviews={reviews.filter((r) => r.isApproved !== false)}
             setActiveTab={setActiveTab}
             onOpenSingleProduct={handleOpenSingleProduct}
             onAddToCart={handleAddToCart}
@@ -147,6 +259,8 @@ export default function App() {
 
         {activeTab === 'products' && (
           <ProductsPage
+            products={products}
+            categories={categories}
             onOpenProductModal={(product) => setSelectedProduct(product)}
             onOpenSingleProduct={handleOpenSingleProduct}
             onAddToCart={handleAddToCart}
@@ -158,6 +272,8 @@ export default function App() {
         {activeTab === 'single-product' && (
           <SingleProductPage
             product={selectedProductForPage}
+            products={products}
+            reviews={reviews.filter((r) => r.isApproved !== false)}
             setActiveTab={setActiveTab}
             onSelectProduct={handleOpenSingleProduct}
             onAddToCart={handleAddToCart}
@@ -178,20 +294,35 @@ export default function App() {
         )}
 
         {activeTab === 'customer-hub' && (
-          <CustomerHubPage onShowToast={setToastMessage} />
+          <CustomerHubPage
+            products={products}
+            reviews={reviews}
+            onAddReview={handleAddReview}
+            onShowToast={setToastMessage}
+          />
         )}
 
-        {activeTab === 'governance' && (
-          <GovernancePage />
-        )}
+        {activeTab === 'governance' && <GovernancePage />}
 
         {activeTab === 'admin' && (
-          <AdminPage onShowToast={setToastMessage} />
+          <AdminPage
+            products={products}
+            setProducts={setProducts}
+            categories={categories}
+            setCategories={setCategories}
+            reviews={reviews}
+            setReviews={setReviews}
+            onShowToast={setToastMessage}
+          />
         )}
       </main>
 
       {/* Corporate Minimalist Footer */}
-      <Footer setActiveTab={setActiveTab} />
+      <Footer
+        products={products}
+        setActiveTab={setActiveTab}
+        onOpenSingleProduct={handleOpenSingleProduct}
+      />
 
       {/* Floating Bottom Accessibility / Cursor Switcher (Desktop) */}
       <div className="fixed bottom-6 left-6 z-30 hidden sm:flex items-center gap-1.5 bg-white/90 backdrop-blur-xs px-2.5 py-1.5 rounded-full border border-stone-200 shadow-sm text-[11px] text-stone-600">

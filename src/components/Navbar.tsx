@@ -1,29 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  ShoppingBag,
-  Menu,
-  X,
-  ChevronDown,
-  MessageCircle,
-  ShieldCheck,
-  Package,
-  Layers,
-  Sparkles,
-  FileText,
-  Briefcase,
-  Star,
-  Truck,
-  Settings,
-} from 'lucide-react';
-import { PageTab } from '../types';
+import { ShoppingBag, Menu, X, ChevronDown } from 'lucide-react';
+import { PageTab, CategoryItem } from '../types';
 import { AmmamaLogo } from './AmmamaLogo';
-import { COMPANY_INFO } from '../data/companyData';
 
 interface NavbarProps {
   activeTab: PageTab;
   setActiveTab: (tab: PageTab) => void;
   cartCount: number;
   openCart: () => void;
+  categories: CategoryItem[];
   onSelectProductCategory?: (category: string) => void;
 }
 
@@ -32,6 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   cartCount,
   openCart,
+  categories,
   onSelectProductCategory,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -70,11 +56,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const tickerItems = [
     'AMMAMA WELLNESS SHELF · SHOP 16, ROHILA MARKET, PHASE III HAYATABAD PESHAWAR',
-    'TEL & WHATSAPP: 0314-8973162 · SECP REGISTERED (UCI: 0303557)',
+    'TEL & WHATSAPP: 0314-8973162 · PURE & NATURAL HERBS WELLNESS',
     'FLAGSHIP TERRA HERBS-8: 8 POTENT BOTANICALS + 5 ESSENTIAL MINERALS (200G)',
     'PREMIUM OLIVE OILS: MUDANYA · MUNDIAL · POMACE (FREE NATIONWIDE DELIVERY)',
     'PURE CHOLISTAN DESI GHEE & WILD KARAK BERRY NECTAR HONEY',
-    'NATIONWIDE CASH ON DELIVERY (COD) ACROSS ALL MAJOR CITIES IN PAKISTAN',
+    'NATIONWIDE CASH ON DELIVERY (COD) ACROSS PAKISTAN',
   ];
 
   return (
@@ -106,10 +92,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Clean Desktop Navigation with Dropdowns */}
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium">
-            {/* Home Tab */}
             <button
               onClick={() => handleNavClick('home')}
-              className={`py-2 transition-colors cursor-pointer ${
+              className={`py-2 transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === 'home'
                   ? 'text-[#1C432E] font-bold border-b-2 border-[#1C432E]'
                   : 'text-stone-700 hover:text-[#1C432E]'
@@ -118,21 +103,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               Home
             </button>
 
-            {/* Products & Store Dropdown */}
+            {/* Products & Store Dropdown (Dynamic Categories) */}
             <div
               className="relative"
               onMouseEnter={() => setOpenDropdown('products')}
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
-                onClick={() => handleNavClick('products')}
-                className={`py-2 inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                onClick={() => handleCategoryClick('all')}
+                className={`py-2 inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'products'
                     ? 'text-[#1C432E] font-bold border-b-2 border-[#1C432E]'
                     : 'text-stone-700 hover:text-[#1C432E]'
                 }`}
               >
-                <span>Products & Store</span>
+                <span>Products &amp; Store</span>
                 <ChevronDown
                   className={`w-3.5 h-3.5 transition-transform duration-200 ${
                     openDropdown === 'products' ? 'rotate-180 text-[#1C432E]' : 'text-stone-400'
@@ -146,56 +131,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                     Organic Product Catalog
                   </div>
                   <button
-                    onClick={() => handleNavClick('products')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between"
+                    onClick={() => handleCategoryClick('all')}
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between font-semibold cursor-pointer"
                   >
                     <span>All Products</span>
                     <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">All</span>
                   </button>
-                  <button
-                    onClick={() => handleCategoryClick('formula')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between font-semibold"
-                  >
-                    <span className="text-[#1C432E]">Terra Herbs-8 (Flagship)</span>
-                    <span className="text-[10px] bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded">200g</span>
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('olive-oil')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between"
-                  >
-                    <span>Premium Olive Oils (5L)</span>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Free Del.</span>
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('honey')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Pure Berry Nectar Honey of Karak
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('ghee')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Cholistan Pure Desi Ghee
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('cooking-oil')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Canola &amp; Mustard Cooking Oils
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('herbal-powder')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Pure Herbal Powders (Sache / Jar)
-                  </button>
-                  <button
-                    onClick={() => handleCategoryClick('vitality')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Herbal Vitality &amp; Endurance
-                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryClick(cat.id)}
+                      className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] transition-colors cursor-pointer"
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -207,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
-                className={`py-2 inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                className={`py-2 inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'contact' || activeTab === 'events' || activeTab === 'careers'
                     ? 'text-[#1C432E] font-bold border-b-2 border-[#1C432E]'
                     : 'text-stone-700 hover:text-[#1C432E]'
@@ -224,26 +174,28 @@ export const Navbar: React.FC<NavbarProps> = ({
               {openDropdown === 'company' && (
                 <div className="absolute top-full left-0 w-64 bg-white rounded-xl shadow-xl border border-stone-200 py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                    Governance & Leadership
+                    Governance &amp; Leadership
                   </div>
                   <button
                     onClick={() => handleNavClick('contact')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] cursor-pointer"
                   >
-                    Leadership & CEO Message
+                    Leadership &amp; Peshawar Store
                   </button>
                   <button
                     onClick={() => handleNavClick('events')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] cursor-pointer"
                   >
-                    Botanical Research & Case Studies
+                    Botanical Research &amp; Case Studies
                   </button>
                   <button
                     onClick={() => handleNavClick('careers')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between"
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] flex items-center justify-between cursor-pointer"
                   >
-                    <span>Careers & Jobs</span>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-1.5 py-0.2 rounded">Hiring</span>
+                    <span>Careers &amp; Jobs</span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">
+                      Hiring
+                    </span>
                   </button>
                 </div>
               )}
@@ -256,7 +208,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
-                className={`py-2 inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                className={`py-2 inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'customer-hub' || activeTab === 'governance'
                     ? 'text-[#1C432E] font-bold border-b-2 border-[#1C432E]'
                     : 'text-stone-700 hover:text-[#1C432E]'
@@ -277,27 +229,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                   <button
                     onClick={() => handleNavClick('customer-hub')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] cursor-pointer"
                   >
-                    Customer Reviews & Feedback
+                    Customer Reviews &amp; Feedback
                   </button>
                   <button
                     onClick={() => handleNavClick('customer-hub')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] cursor-pointer"
                   >
                     Track Courier Order (TCS / Leopards)
                   </button>
                   <button
                     onClick={() => handleNavClick('governance')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E] cursor-pointer"
                   >
-                    SECP Credentials & Policies
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('governance')}
-                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-[#FAF8F5] hover:text-[#1C432E]"
-                  >
-                    Returns & Damage Guarantee
+                    SECP Credentials &amp; Policies
                   </button>
                 </div>
               )}
@@ -305,8 +251,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Action Zone: Cart, Order CTA & Mobile Menu */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            {/* Shopping Cart Button */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={openCart}
               className="relative p-2.5 rounded-full text-stone-700 hover:text-[#1C432E] hover:bg-stone-200/60 transition-colors flex items-center justify-center cursor-pointer"
@@ -320,18 +265,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Primary Order Action Button */}
             <button
-              onClick={() => handleNavClick('products')}
-              className="hidden md:inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white bg-[#1C432E] rounded-md hover:bg-[#25573C] transition-colors duration-150 shadow-xs cursor-pointer"
+              onClick={() => handleCategoryClick('all')}
+              className="hidden md:inline-flex items-center justify-center px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white bg-[#1C432E] rounded-md hover:bg-[#25573C] transition-colors duration-150 shadow-xs cursor-pointer whitespace-nowrap"
             >
               Order Online
             </button>
 
-            {/* Mobile Menu Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-stone-700 hover:text-stone-900 rounded-md hover:bg-stone-100 transition-colors"
+              className="lg:hidden p-2 text-stone-700 hover:text-stone-900 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -342,8 +285,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Responsive Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-stone-200 bg-[#FAF8F5] px-4 pt-3 pb-8 space-y-2 shadow-2xl animate-in slide-in-from-top-2 duration-200 max-h-[85vh] overflow-y-auto">
-          {/* Home Link */}
+        <div className="lg:hidden border-t border-stone-200 bg-[#FAF8F5] px-4 pt-3 pb-6 space-y-2 shadow-2xl animate-in slide-in-from-top-2 duration-200 max-h-[82vh] overflow-y-auto">
           <button
             onClick={() => handleNavClick('home')}
             className={`w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold transition-colors ${
@@ -361,7 +303,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }
               className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-stone-800"
             >
-              <span>Products & Store</span>
+              <span>Products &amp; Store</span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${
                   mobileExpandedGroup === 'products' ? 'rotate-180 text-[#1C432E]' : 'text-stone-400'
@@ -371,53 +313,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             {mobileExpandedGroup === 'products' && (
               <div className="bg-[#FAF8F5] px-3 py-2 space-y-1 text-xs border-t border-stone-100">
                 <button
-                  onClick={() => handleNavClick('products')}
+                  onClick={() => handleCategoryClick('all')}
                   className="w-full text-left py-1.5 font-semibold text-[#1C432E]"
                 >
                   View All Products →
                 </button>
-                <button
-                  onClick={() => handleCategoryClick('formula')}
-                  className="w-full text-left py-1.5 text-stone-700 font-semibold text-[#1C432E]"
-                >
-                  Terra Herbs-8 (200g Flagship)
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('honey')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Pure Beiry Nectar Honey of Karak
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('ghee')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Cholistan Pure Desi Ghee
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('olive-oil')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Mudanya &amp; Mundial Olive Oils (5L)
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('cooking-oil')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Canola &amp; Mustard Cooking Oils
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('herbal-powder')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Pure Herbal Powders (Sache / Jar)
-                </button>
-                <button
-                  onClick={() => handleCategoryClick('vitality')}
-                  className="w-full text-left py-1.5 text-stone-700"
-                >
-                  Herbal Vitality &amp; Endurance
-                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryClick(cat.id)}
+                    className="w-full text-left py-1.5 text-stone-700"
+                  >
+                    {cat.name}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -430,7 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }
               className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-stone-800"
             >
-              <span>Company & Governance</span>
+              <span>Company &amp; Governance</span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${
                   mobileExpandedGroup === 'company' ? 'rotate-180 text-[#1C432E]' : 'text-stone-400'
@@ -443,19 +352,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNavClick('contact')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  Leadership & CEO Message
+                  Leadership &amp; Peshawar Store
                 </button>
                 <button
                   onClick={() => handleNavClick('events')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  Botanical Research & Case Studies
+                  Botanical Research &amp; Case Studies
                 </button>
                 <button
                   onClick={() => handleNavClick('careers')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  Careers & Job Openings
+                  Careers &amp; Job Openings
                 </button>
               </div>
             )}
@@ -469,7 +378,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }
               className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-stone-800"
             >
-              <span>Customer Care & Policies</span>
+              <span>Customer Care &amp; Policies</span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${
                   mobileExpandedGroup === 'care' ? 'rotate-180 text-[#1C432E]' : 'text-stone-400'
@@ -482,7 +391,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNavClick('customer-hub')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  Customer Reviews & Feedback
+                  Customer Reviews &amp; Feedback
                 </button>
                 <button
                   onClick={() => handleNavClick('customer-hub')}
@@ -494,20 +403,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNavClick('governance')}
                   className="w-full text-left py-1.5 text-stone-700"
                 >
-                  SECP Credentials & Policies
+                  SECP Credentials &amp; Policies
                 </button>
               </div>
             )}
           </div>
 
-          {/* Mobile Action Buttons */}
-          <div className="pt-3 border-t border-stone-200 space-y-2">
+          {/* Mobile Cart Button */}
+          <div className="pt-2 border-t border-stone-200">
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 openCart();
               }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-[#1C432E] text-white text-sm font-semibold rounded-md shadow-xs cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-[#1C432E] text-white text-sm font-semibold rounded-md shadow-xs cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4 text-emerald-200" />

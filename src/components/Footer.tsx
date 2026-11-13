@@ -1,14 +1,16 @@
 import React from 'react';
-import { ShieldCheck, ArrowUpRight, MapPin, Phone, Mail } from 'lucide-react';
-import { PageTab } from '../types';
+import { ArrowUpRight, MapPin, Phone, Mail } from 'lucide-react';
+import { PageTab, Product } from '../types';
 import { COMPANY_INFO } from '../data/companyData';
 import { AmmamaLogo } from './AmmamaLogo';
 
 interface FooterProps {
+  products: Product[];
   setActiveTab: (tab: PageTab) => void;
+  onOpenSingleProduct: (product: Product) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
+export const Footer: React.FC<FooterProps> = ({ products, setActiveTab, onOpenSingleProduct }) => {
   const handleNav = (tab: PageTab) => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -18,7 +20,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
     <footer className="bg-[#122A1C] text-stone-300 pt-10 pb-8 border-t border-[#1C3B2A] text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start text-left">
-          {/* Brand Identity: Ammama Wellness Shelf on two lines without subtitle */}
+          {/* Brand Identity */}
           <div className="md:col-span-4 space-y-3 text-left">
             <button
               onClick={() => handleNav('home')}
@@ -32,64 +34,26 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             </p>
           </div>
 
-          {/* Catalog Links - Left aligned */}
+          {/* Dynamic Catalog Links */}
           <div className="md:col-span-3 space-y-2.5 text-left">
             <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider text-left">
               Explore Store
             </h4>
             <ul className="space-y-1.5 text-xs text-stone-400 text-left">
-              <li className="text-left">
-                <button
-                  onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer text-left block"
-                >
-                  Terra Herbs-8 (Flagship Formula)
-                </button>
-              </li>
-              <li className="text-left">
-                <button
-                  onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer text-left block"
-                >
-                  Pure Beiry Nectar Honey of Karak
-                </button>
-              </li>
-              <li className="text-left">
-                <button
-                  onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer text-left block"
-                >
-                  Cholistan Pure Desi Ghee
-                </button>
-              </li>
-              <li className="text-left">
-                <button
-                  onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer text-left block"
-                >
-                  Mudanya Extra Virgin Olive Oil (5L)
-                </button>
-              </li>
-              <li className="text-left">
-                <button
-                  onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer text-left block"
-                >
-                  Mundial &amp; Pomace Olive Oils
-                </button>
-              </li>
-              <li className="text-left">
-                <button
-                  onClick={() => handleNav('products')}
-                  className="hover:text-white transition-colors cursor-pointer text-left block"
-                >
-                  Canola &amp; Mustard Cooking Oils
-                </button>
-              </li>
+              {products.slice(0, 6).map((prod) => (
+                <li key={prod.id} className="text-left">
+                  <button
+                    onClick={() => onOpenSingleProduct(prod)}
+                    className="hover:text-white transition-colors cursor-pointer text-left block truncate max-w-full"
+                  >
+                    {prod.name}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Governance & Care - Strictly Left Aligned */}
+          {/* Governance & Care */}
           <div className="md:col-span-2 space-y-2.5 text-left">
             <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider text-left">
               Governance &amp; Care
@@ -130,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
               <li className="pt-2 text-left">
                 <button
                   onClick={() => handleNav('admin')}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#1F412D] hover:bg-[#28573D] text-[#E6C687] hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#1F412D] hover:bg-[#28573D] text-[#E6C687] hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
                   title="Open Store Administration Dashboard"
                 >
                   <span>Admin Portal</span>
@@ -143,7 +107,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
           {/* Store Location & Direct Contact Info */}
           <div className="md:col-span-3 space-y-2.5 text-left">
             <h4 className="font-serif text-xs font-bold text-white uppercase tracking-wider text-left">
-              Ammama Wellness Shelf
+              {COMPANY_INFO.brandName}
             </h4>
             <div className="space-y-2 text-xs text-stone-400 text-left">
               <div className="flex items-start gap-2 text-left">

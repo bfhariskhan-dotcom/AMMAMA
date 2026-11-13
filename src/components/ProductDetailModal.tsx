@@ -19,6 +19,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'overview' | 'composition' | 'directions'>('overview');
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
 
   useEffect(() => {
     if (product && product.variants && product.variants.length > 0) {
@@ -27,9 +28,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       setSelectedVariant(undefined);
     }
     setQuantity(1);
+    setActiveImgIdx(0);
   }, [product]);
 
   if (!product) return null;
+
+  const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
+  const displayImage = galleryImages[activeImgIdx] || product.image;
 
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
   const currentWeight = selectedVariant ? selectedVariant.weight : product.weight;
@@ -61,11 +66,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </button>
 
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Image & Packaging Highlights - Full Contain */}
-            <div className="p-6 bg-[#F4EFE6] flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-stone-200">
-              <div className="relative rounded-2xl overflow-hidden shadow-sm max-w-xs w-full bg-white aspect-square p-6 flex items-center justify-center">
+            {/* Image & Multi-Photo Gallery - Full Contain */}
+            <div className="p-5 bg-[#F4EFE6] flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-stone-200">
+              <div className="relative rounded-2xl overflow-hidden shadow-sm max-w-xs w-full bg-white aspect-[3/4] p-4 flex items-center justify-center">
                 <img
-                  src={product.image}
+                  src={displayImage}
                   alt={product.name}
                   className="w-full h-full object-contain"
                 />
@@ -76,8 +81,26 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 )}
               </div>
 
+              {/* Thumbnail Strip if multiple images */}
+              {galleryImages.length > 1 && (
+                <div className="mt-3 flex items-center gap-2 overflow-x-auto max-w-xs pb-1">
+                  {galleryImages.map((imgUrl, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveImgIdx(idx)}
+                      className={`w-12 h-12 rounded-lg bg-white p-1 border shrink-0 overflow-hidden cursor-pointer ${
+                        activeImgIdx === idx ? 'border-[#1C432E] ring-2 ring-[#1C432E]/30' : 'border-stone-200 opacity-75 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={imgUrl} alt="" className="w-full h-full object-contain" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Tagline & Net Weight Pill */}
-              <div className="mt-4 flex items-center justify-between w-full max-w-xs text-xs text-stone-600 px-2">
+              <div className="mt-3 flex items-center justify-between w-full max-w-xs text-xs text-stone-600 px-2">
                 <span>{currentPackaging}: <strong className="text-stone-900 font-mono">{currentWeight}</strong></span>
                 <span className={currentDelivery === 'Free' ? 'text-emerald-700 font-semibold' : 'text-stone-500'}>
                   {currentDelivery === 'Free' ? 'Free Delivery' : 'Charges applied'}

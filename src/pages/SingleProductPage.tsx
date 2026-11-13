@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -19,10 +19,12 @@ import {
   Box,
 } from 'lucide-react';
 import { Product, PageTab, ReviewItem, ProductVariant } from '../types';
-import { PRODUCTS, REVIEWS, COMPANY_INFO } from '../data/companyData';
+import { REVIEWS, COMPANY_INFO } from '../data/companyData';
 
 interface SingleProductPageProps {
   product: Product;
+  products: Product[];
+  reviews?: ReviewItem[];
   setActiveTab: (tab: PageTab) => void;
   onSelectProduct: (product: Product) => void;
   onAddToCart: (product: Product, quantity: number, variant?: ProductVariant) => void;
@@ -31,17 +33,32 @@ interface SingleProductPageProps {
 
 export const SingleProductPage: React.FC<SingleProductPageProps> = ({
   product,
+  products,
+  reviews = REVIEWS,
   setActiveTab,
   onSelectProduct,
   onAddToCart,
   onShowToast,
 }) => {
-  // If product has variants, default to first variant
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product.variants && product.variants.length > 0 ? product.variants[0] : undefined
   );
   const [quantity, setQuantity] = useState(1);
-  const [activeInfoTab, setActiveInfoTab] = useState<'formulation' | 'benefits' | 'usage' | 'quality' | 'reviews'>('formulation');
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [activeInfoTab, setActiveInfoTab] = useState<'formulation' | 'benefits' | 'usage' | 'quality' | 'reviews'>(
+    product.composition && product.composition.length > 0 ? 'formulation' : 'benefits'
+  );
+
+  // Sync state when navigating between products
+  useEffect(() => {
+    setSelectedVariant(product.variants && product.variants.length > 0 ? product.variants[0] : undefined);
+    setQuantity(1);
+    setActiveImageIdx(0);
+    setActiveInfoTab(product.composition && product.composition.length > 0 ? 'formulation' : 'benefits');
+  }, [product.id]);
+
+  const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
+  const displayImage = galleryImages[activeImageIdx] || product.image;
 
   // Dynamic price & delivery based on variant
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
@@ -50,15 +67,16 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
   const currentDelivery = selectedVariant ? selectedVariant.delivery : (product.delivery || 'Free');
 
   // Filter reviews for this product
-  const productReviews = REVIEWS.filter(
+  const activeReviews = reviews.length > 0 ? reviews : REVIEWS;
+  const productReviews = activeReviews.filter(
     (r) =>
       r.product.toLowerCase().includes(product.name.toLowerCase()) ||
       product.name.toLowerCase().includes(r.product.toLowerCase())
   );
-  const displayReviews = productReviews.length > 0 ? productReviews : REVIEWS.slice(0, 3);
+  const displayReviews = productReviews.length > 0 ? productReviews : activeReviews.slice(0, 3);
 
   // Related products
-  const relatedProducts = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
+  const relatedProducts = products.filter((p) => p.id !== product.id).slice(0, 3);
 
   // Copy Direct Product Link
   const handleCopyProductLink = () => {
@@ -74,9 +92,9 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-16 text-left">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-8 sm:space-y-12 text-left">
       {/* Breadcrumb Navigation & Share Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 pb-3">
         <nav className="flex items-center gap-2 text-xs text-stone-500 flex-wrap">
           <button
             onClick={() => {
@@ -103,34 +121,54 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
 
         <button
           onClick={handleCopyProductLink}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg text-xs font-semibold text-stone-700 transition-colors cursor-pointer shrink-0 shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg text-xs font-semibold text-stone-700 transition-colors whitespace-nowrap cursor-pointer shrink-0 shadow-2xs self-start sm:self-auto"
           title="Copy direct link for sharing"
         >
           <Share2 className="w-3.5 h-3.5 text-[#155D27]" />
-          <span>Share Product Link</span>
+          <span>Share Link</span>
         </button>
       </div>
 
       {/* Main PDP Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-        {/* Left Column: Product Imagery & Trust Badges */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="relative bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 shadow-sm overflow-hidden flex items-center justify-center aspect-square">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* Left Column: Portrait Product Imagery & Multi-Photo Thumbnail Strip */}
+        <div className="lg:col-span-5 space-y-3">
+          <div className="relative bg-white rounded-2xl p-4 sm:p-6 border border-stone-200/90 shadow-sm overflow-hidden flex items-center justify-center aspect-[3/3.6]">
             <img
-              src={product.image}
+              src={displayImage}
               alt={product.name}
               className="w-full h-full object-contain hover:scale-103 transition-transform duration-500"
             />
             {product.badge && (
-              <div className="absolute top-4 left-4 bg-[#155D27] text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs">
+              <div className="absolute top-3 left-3 bg-[#155D27] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
                 {product.badge}
               </div>
             )}
-            <div className="absolute bottom-4 right-4 bg-[#FAF9F5]/90 backdrop-blur-xs text-[#155D27] text-xs font-bold px-3 py-1 rounded-full border border-stone-200 flex items-center gap-1.5">
-              <Box className="w-3.5 h-3.5" />
+            <div className="absolute bottom-3 right-3 bg-[#FAF9F5]/95 backdrop-blur-xs text-[#155D27] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-stone-200 flex items-center gap-1">
+              <Box className="w-3 h-3" />
               <span>{currentPackaging}: {currentWeight}</span>
             </div>
           </div>
+
+          {/* Thumbnail Strip (if 2 to 15 images) */}
+          {galleryImages.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {galleryImages.map((imgUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveImageIdx(idx)}
+                  className={`w-16 h-16 rounded-xl bg-white p-1.5 border shrink-0 overflow-hidden cursor-pointer transition-all ${
+                    activeImageIdx === idx
+                      ? 'border-[#155D27] ring-2 ring-[#155D27]/30'
+                      : 'border-stone-200 opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  <img src={imgUrl} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Quick Purity Markers */}
           <div className="grid grid-cols-3 gap-3 text-xs">
@@ -150,7 +188,7 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
         </div>
 
         {/* Right Column: Commercial Module & Purchasing */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-7 space-y-5">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold uppercase tracking-widest text-[#C28E3A]">
@@ -274,22 +312,22 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
               </div>
             </div>
 
-            {/* Primary Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            {/* Primary Single-Line Action Buttons */}
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
                 onClick={() => onAddToCart(product, quantity, selectedVariant)}
-                className="w-full py-3.5 px-5 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-3 bg-[#155D27] hover:bg-[#1C7A38] text-white text-xs font-semibold uppercase tracking-wider rounded-lg transition-all shadow-sm inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Add to Shopping Cart</span>
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                <span>Add to Cart</span>
               </button>
 
               <button
                 onClick={handleWhatsAppOrder}
-                className="w-full py-3.5 px-5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-3 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-lg transition-all shadow-sm inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Order via WhatsApp</span>
+                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>WhatsApp Order</span>
               </button>
             </div>
 
@@ -545,9 +583,9 @@ export const SingleProductPage: React.FC<SingleProductPageProps> = ({
               setActiveTab('products');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="text-xs font-semibold text-[#155D27] hover:underline cursor-pointer"
+            className="text-xs font-semibold text-[#155D27] hover:underline whitespace-nowrap cursor-pointer"
           >
-            Explore All 16 Products →
+            All Products ({products.length}) →
           </button>
         </div>
 

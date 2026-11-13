@@ -1,3 +1,10 @@
+export interface CategoryItem {
+  id: string;
+  name: string;
+  description?: string;
+  order?: number;
+}
+
 export interface ProductVariant {
   id: string;
   packagingType: 'Bottle' | 'Tin' | 'Jar' | 'Sache' | 'Stand up Pouch' | 'Bottle- 10' | string;
@@ -10,13 +17,16 @@ export interface Product {
   id: string;
   name: string;
   subtitle: string;
-  category: 'formula' | 'honey' | 'superfood' | 'ghee' | 'wellness' | 'olive-oil' | 'cooking-oil' | 'herbal-powder' | 'vitality';
+  category: string;
   packagingType?: 'Bottle' | 'Tin' | 'Jar' | 'Sache' | 'Stand up Pouch' | 'Bottle- 10' | string;
   price: number; // in PKR base price
+  compareAtPrice?: number; // optional original price
   weight: string; // base weight
+  sku?: string;
   delivery?: 'Free' | 'Charges applied';
   variants?: ProductVariant[];
-  image: string;
+  image: string; // Primary (top) cover image
+  images?: string[]; // Up to 15 images gallery
   badge?: string;
   isFlagship?: boolean;
   shortDescription: string;
@@ -31,6 +41,7 @@ export interface Product {
   enrichedWith?: string[];
   directions: string;
   inStock: boolean;
+  createdAt?: number;
 }
 
 export interface CartItem {
